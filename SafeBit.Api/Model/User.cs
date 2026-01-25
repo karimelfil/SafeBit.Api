@@ -1,5 +1,6 @@
 ﻿using SafeBit.Api.Model.Enums;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SafeBit.Api.Model
 {
@@ -26,8 +27,8 @@ namespace SafeBit.Api.Model
         [StringLength(20)]
         public string? Phone { get; set; }
 
-        [Required(ErrorMessage = "Date of birth is required.")]
-        [DataType(DataType.Date)]
+        [Required]
+        [Column(TypeName = "date")]
         public DateTime DateOfBirth { get; set; }
 
         [Required(ErrorMessage = "Gender is required.")]
