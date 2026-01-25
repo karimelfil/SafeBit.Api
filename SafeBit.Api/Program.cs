@@ -9,8 +9,18 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 builder.Services.AddDbContext<SafeBiteDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions =>
+        {
+            npgsqlOptions.MigrationsHistoryTable(
+                "__EFMigrationsHistory",
+                "safebit"
+            );
+        }
+    )
 );
+
 
 
 builder.Services.AddControllers();

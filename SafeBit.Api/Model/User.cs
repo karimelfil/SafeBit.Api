@@ -1,0 +1,67 @@
+﻿using SafeBit.Api.Model.Enums;
+using System.ComponentModel.DataAnnotations;
+
+namespace SafeBit.Api.Model
+{
+    public class User
+    {
+        [Key]
+        public int UserID { get; set; }
+
+        [Required]
+        public int RoleID { get; set; }
+
+        [StringLength(50, ErrorMessage = "First name cannot exceed 50 characters.")]
+        public string? FirstName { get; set; }
+
+        [StringLength(50, ErrorMessage = "Last name cannot exceed 50 characters.")]
+        public string? LastName { get; set; }
+
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Invalid email address.")]
+        [StringLength(100)]
+        public string Email { get; set; } = string.Empty;
+
+        [Phone(ErrorMessage = "Invalid phone number.")]
+        [StringLength(20)]
+        public string? Phone { get; set; }
+
+        [Required(ErrorMessage = "Date of birth is required.")]
+        [DataType(DataType.Date)]
+        public DateTime DateOfBirth { get; set; }
+
+        [Required(ErrorMessage = "Gender is required.")]
+        [EnumDataType(typeof(Gender), ErrorMessage = "Invalid gender value.")]
+        public Gender Gender { get; set; }
+
+        // Only meaningful if Gender = Female
+        public bool IsPregnant { get; set; } = false;
+
+
+
+        public bool IsSuspended { get; set; } = false;
+
+        [Required(ErrorMessage = "Password hash is required.")]
+        [StringLength(255, MinimumLength = 60, ErrorMessage = "Invalid password hash length.")]
+        public string PasswordHash { get; set; } = string.Empty;
+
+        [Required]
+        public DateTime RegistrationDate { get; set; } = DateTime.UtcNow;
+
+        [Required]
+        [StringLength(20)]
+        public string Status { get; set; } = "Active";
+
+
+        [Required]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? UpdatedAt { get; set; }
+
+        [StringLength(100)]
+        public string? UpdatedBy { get; set; }
+
+        public bool IsDeleted { get; set; } = false;
+    }
+
+}
