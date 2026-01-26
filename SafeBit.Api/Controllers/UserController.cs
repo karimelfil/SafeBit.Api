@@ -3,13 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SafeBit.Api.Data;
 using SafeBit.Api.DTOs.User;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace SafeBite.API.Controllers
 {
 	[ApiController]
 	[Route("api/users")]
-	[Authorize] // 🔐 JWT REQUIRED FOR ALL ACTIONS
+	[Authorize] // 🔐 JWT REQUIRED
 	public class UserController : ControllerBase
 	{
 		private readonly SafeBiteDbContext _context;
@@ -21,18 +22,19 @@ namespace SafeBite.API.Controllers
 
 		// =====================================================
 		// GET USER PERSONAL INFO
-		// - Requires JWT authentication
-		// - User can only access their own profile
 		// =====================================================
 		[HttpGet("{userId}/personal-info")]
 		public async Task<IActionResult> GetPersonalInfo(int userId)
 		{
-			var userIdFromToken = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var userIdFromToken = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
-			if (userIdFromToken == null)
+			if (string.IsNullOrEmpty(userIdFromToken))
 				return Unauthorized("Invalid or missing token.");
 
-			if (int.Parse(userIdFromToken) != userId)
+			if (!int.TryParse(userIdFromToken, out int tokenUserId))
+				return Unauthorized("Invalid token format.");
+
+			if (tokenUserId != userId)
 				return Forbid("You are not allowed to view this profile.");
 
 			var user = await _context.Users
@@ -56,21 +58,21 @@ namespace SafeBite.API.Controllers
 
 		// =====================================================
 		// UPDATE USER PERSONAL INFO
-		// - Requires JWT authentication
-		// - User can only update their own profile
-		// - Only updates provided fields
 		// =====================================================
 		[HttpPut("{userId}/personal-info")]
 		public async Task<IActionResult> UpdatePersonalInfo(
 			int userId,
 			[FromBody] UserPersonalInfoDto dto)
 		{
-			var userIdFromToken = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var userIdFromToken = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
-			if (userIdFromToken == null)
+			if (string.IsNullOrEmpty(userIdFromToken))
 				return Unauthorized("Invalid or missing token.");
 
-			if (int.Parse(userIdFromToken) != userId)
+			if (!int.TryParse(userIdFromToken, out int tokenUserId))
+				return Unauthorized("Invalid token format.");
+
+			if (tokenUserId != userId)
 				return Forbid("You are not allowed to update this profile.");
 
 			var user = await _context.Users
@@ -79,7 +81,7 @@ namespace SafeBite.API.Controllers
 			if (user == null)
 				return NotFound("User not found.");
 
-			// ✅ Update only provided fields
+			// Update only provided fields
 			if (dto.FirstName != null)
 				user.FirstName = dto.FirstName;
 
