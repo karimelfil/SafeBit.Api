@@ -9,20 +9,20 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Configure(builder.Configuration.GetSection("Kestrel"));
+	options.Configure(builder.Configuration.GetSection("Kestrel"));
 });
 
 builder.Services.AddDbContext<SafeBiteDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsqlOptions =>
-        {
-            npgsqlOptions.MigrationsHistoryTable(
-                "__EFMigrationsHistory",
-                "safebit"
-            );
-        }
-    )
+	options.UseNpgsql(
+		builder.Configuration.GetConnectionString("DefaultConnection"),
+		npgsqlOptions =>
+		{
+			npgsqlOptions.MigrationsHistoryTable(
+				"__EFMigrationsHistory",
+				"safebit"
+			);
+		}
+	)
 );
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -30,21 +30,21 @@ var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
 
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+	options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+	options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(key)
-    };
+	options.TokenValidationParameters = new TokenValidationParameters
+	{
+		ValidateIssuer = true,
+		ValidateAudience = true,
+		ValidateLifetime = true,
+		ValidateIssuerSigningKey = true,
+		ValidIssuer = jwtSettings["Issuer"],
+		ValidAudience = jwtSettings["Audience"],
+		IssuerSigningKey = new SymmetricSecurityKey(key)
+	};
 });
 
 builder.Services.AddAuthorization();
@@ -59,8 +59,8 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+	app.UseSwagger();
+	app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
