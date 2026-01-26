@@ -265,6 +265,36 @@ namespace SafeBite.API.Controllers
         }
 
 
+        // Logs out the authenticated user by revoking the active JWT token and recording the logout time.
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var tokenJti = User.FindFirstValue(JwtRegisteredClaimNames.Jti);
+
+            if (userId == null || tokenJti == null)
+                return Unauthorized();
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.UserID == int.Parse(userId));
+
+            if (user == null)
+                return Unauthorized();
+
+
+            user.ActiveJti = null;
+            user.LastLogoutAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Logged out successfully.");
+        }
+
+
+
+
         // Generates a JWT token for the authenticated user with relevant claims.
         private string GenerateJwtToken(User user, string roleType)
 {
@@ -272,12 +302,17 @@ namespace SafeBite.API.Controllers
     var key = new SymmetricSecurityKey(
         Encoding.UTF8.GetBytes(jwtSettings["Key"]!)
     );
+            var jti = Guid.NewGuid().ToString();
 
-    var claims = new List<Claim>
+            user.ActiveJti = jti;
+            _context.SaveChanges();
+
+            var claims = new List<Claim>
     {
         new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
         new Claim(ClaimTypes.Email, user.Email),
-        new Claim(ClaimTypes.Role, roleType)
+        new Claim(ClaimTypes.Role, roleType),
+                new Claim(JwtRegisteredClaimNames.Jti, jti)
     };
 
     var token = new JwtSecurityToken(

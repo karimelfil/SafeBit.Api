@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SafeBit.Api.Data;
 using SafeBit.Api.Services;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
@@ -42,7 +43,38 @@ builder.Services
             RoleClaimType = ClaimTypes.Role,
             NameClaimType = ClaimTypes.NameIdentifier
         };
+
+        // ====================== TOKEN VALIDATION EVENTS ======================
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var db = context.HttpContext.RequestServices
+                    .GetRequiredService<SafeBiteDbContext>();
+
+                var userId = context.Principal?
+                    .FindFirstValue(ClaimTypes.NameIdentifier);
+
+                var jti = context.Principal?
+                    .FindFirstValue(JwtRegisteredClaimNames.Jti);
+
+                if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(jti))
+                {
+                    context.Fail("Invalid token");
+                    return;
+                }
+
+                var user = await db.Users.FindAsync(int.Parse(userId));
+
+                // Token revoked or user deleted/suspended
+                if (user == null || user.ActiveJti != jti || user.IsDeleted || user.IsSuspended)
+                {
+                    context.Fail("Token revoked");
+                }
+            }
+        };
     });
+
 
 // ====================== AUTHORIZATION ======================
 builder.Services.AddAuthorization();
