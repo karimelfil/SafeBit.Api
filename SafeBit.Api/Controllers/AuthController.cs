@@ -1,11 +1,17 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using SafeBit.Api.Data;
+using SafeBit.Api.DTOs;
 using SafeBit.Api.DTOs.Register;
 using SafeBit.Api.Model;
 using SafeBit.Api.Model.Enums;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using BCrypt.Net; 
 
 namespace SafeBite.API.Controllers
 {
@@ -14,10 +20,12 @@ namespace SafeBite.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly SafeBiteDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(SafeBiteDbContext context)
+        public AuthController(SafeBiteDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         // Registers a new user by validating input, ensuring email uniqueness,
@@ -58,7 +66,7 @@ namespace SafeBite.API.Controllers
                     Gender = request.Gender,
                     IsPregnant = request.Gender == Gender.Female && request.IsPregnant,
                     IsSuspended = false,
-                    PasswordHash = HashPassword(request.Password),
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                     RegistrationDate = DateTime.UtcNow,
                     Status = "Active",
                     CreatedAt = DateTime.UtcNow,
@@ -104,13 +112,81 @@ namespace SafeBite.API.Controllers
             }
         }
 
+        // Authenticates a user, validates credentials, and returns a JWT token on success.
+        // Verifies user credentials, checks account status, and issues a JWT token.
 
-        // PASSWORD HASHING
-        private static string HashPassword(string password)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginRequestDto request)
         {
-            using var sha256 = SHA256.Create();
-            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(bytes);
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u =>
+                    u.Email == request.Email &&
+                    !u.IsDeleted &&
+                    !u.IsSuspended);
+
+            if (user == null)
+                return Unauthorized("Invalid credentials");
+
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                return Unauthorized("Invalid credentials");
+
+            var roleType = await _context.Roles
+                .Where(r => r.RoleID == user.RoleID)
+                .Select(r => r.Type)
+                .FirstOrDefaultAsync();
+
+            if (roleType == null)
+                return Unauthorized("User role not found.");
+
+            var token = GenerateJwtToken(user, roleType);
+
+            return Ok(new
+            {
+                token,
+                role = roleType,
+                userId = user.UserID
+            });
         }
+
+
+
+
+
+
+
+
+
+        // JWT TOKEN GENERATION
+        private string GenerateJwtToken(User user, string roleType)
+        {
+            var jwtSettings = _configuration.GetSection("Jwt");
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtSettings["Key"]!)
+            );
+
+            var claims = new List<Claim>
+    {
+        new Claim(JwtRegisteredClaimNames.Sub, user.UserID.ToString()),
+        new Claim(JwtRegisteredClaimNames.Email, user.Email),
+        new Claim(ClaimTypes.Role, roleType),
+        new Claim("role", roleType)
+    };
+
+            var token = new JwtSecurityToken(
+                issuer: jwtSettings["Issuer"],
+                audience: jwtSettings["Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(
+                    int.Parse(jwtSettings["DurationInMinutes"]!)
+                ),
+                signingCredentials: new SigningCredentials(
+                    key,
+                    SecurityAlgorithms.HmacSha256
+                )
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
     }
 }
