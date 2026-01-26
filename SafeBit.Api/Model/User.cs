@@ -63,6 +63,12 @@ namespace SafeBit.Api.Model
         public string? UpdatedBy { get; set; }
 
         public bool IsDeleted { get; set; } = false;
+
+
+
+        public string? PasswordResetToken { get; set; }
+        public DateTime? PasswordResetTokenExpiry { get; set; }
+
     }
 
 }
