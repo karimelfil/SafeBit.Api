@@ -254,6 +254,230 @@ namespace SafeBit.Api.Controllers
         }
 
 
+        // Retrieves all allergens from the database.
+        [HttpGet("allergens")]
+        public async Task<IActionResult> GetAllAllergens()
+        {
+            var allergens = await _context.Allergies
+                .AsNoTracking()
+                .Select(a => new AdminAllergenDto
+                {
+                    Id = a.AllergyID,
+                    Name = a.Name,
+                    Category = a.Category,
+                    Created_At = a.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(new { allergens });
+        }
+
+        // Retrieves all diseases from the database.
+        [HttpGet("diseases")]
+        public async Task<IActionResult> GetAllDiseases()
+        {
+            var diseases = await _context.Diseases
+                .AsNoTracking()
+                .Select(a => new AdminDiseasesDto
+                {
+                    Id = a.DiseaseID,
+                    Name = a.Name,
+                    Category = a.Category,
+                    Created_At = a.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(new { diseases });
+        }
+
+        // Creates a new allergen in the database after validating the input and checking for duplicates.
+        [HttpPost("allergens")]
+        public async Task<IActionResult> CreateAllergen([FromBody] CreateAllergenDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Name))
+                return BadRequest("Allergen name is required.");
+
+            if (string.IsNullOrWhiteSpace(request.Category))
+                return BadRequest("Allergen category is required.");
+
+            var exists = await _context.Allergies
+                .AnyAsync(a =>
+                    a.Name.ToLower() == request.Name.ToLower() &&
+                    a.Category.ToLower() == request.Category.ToLower()
+                );
+
+            if (exists)
+                return Conflict("This allergen already exists.");
+
+            var allergen = new Allergy
+            {
+                Name = request.Name.Trim(),
+                Category = request.Category.Trim(),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Allergies.Add(allergen);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Allergen created successfully",
+                allergen_id = allergen.AllergyID
+            });
+        }
+
+        // Creates a new disease in the database after validating the input and checking for duplicates.
+        [HttpPost("diseases")]
+        public async Task<IActionResult> CreateDiseases([FromBody] CreateDiseasesDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Name))
+                return BadRequest("Diseases name is required.");
+
+            if (string.IsNullOrWhiteSpace(request.Category))
+                return BadRequest("Diseases category is required.");
+
+            var exists = await _context.Diseases
+                .AnyAsync(a =>
+                    a.Name.ToLower() == request.Name.ToLower() &&
+                    a.Category.ToLower() == request.Category.ToLower()
+                );
+
+            if (exists)
+                return Conflict("This Diseases already exists.");
+
+            var diseases = new Disease
+            {
+                Name = request.Name.Trim(),
+                Category = request.Category.Trim(),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Diseases.Add(diseases);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "diseases created successfully",
+                diseases_id = diseases.DiseaseID
+            });
+        }
+
+
+        // Updates an existing allergen's details after validating input and checking for duplicates.
+        [HttpPut("allergens/{id}")]
+        public async Task<IActionResult> UpdateAllergen(int id,[FromBody] UpdateAllergenDto request)
+        {
+            var allergen = await _context.Allergies
+                .FirstOrDefaultAsync(a => a.AllergyID == id);
+
+            if (allergen == null)
+                return NotFound("Allergen not found.");
+
+            var newName = request.Name?.Trim() ?? allergen.Name;
+            var newCategory = request.Category?.Trim() ?? allergen.Category;
+
+            var duplicateExists = await _context.Allergies.AnyAsync(a =>
+                a.AllergyID != id &&
+                a.Name.ToLower() == newName.ToLower() &&
+                a.Category.ToLower() == newCategory.ToLower()
+            );
+
+            if (duplicateExists)
+                return Conflict("Another allergen with the same name and category already exists.");
+
+            allergen.Name = newName;
+            allergen.Category = newCategory;
+            allergen.UpdatedAt = DateTime.UtcNow;
+            allergen.UpdatedBy= "Admin" ;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Allergen updated successfully"
+            });
+        }
+
+
+
+
+        // Updates an existing disease's details after validating input and checking for duplicates.
+        [HttpPut("diseases/{id}")]
+        public async Task<IActionResult> UpdateDiseases(int id, [FromBody] UpdateDiseasesDto request)
+        {
+            var diseases = await _context.Diseases
+                .FirstOrDefaultAsync(a => a.DiseaseID == id);
+
+            if (diseases == null)
+                return NotFound("Diseases not found.");
+
+            var newName = request.Name?.Trim() ?? diseases.Name;
+            var newCategory = request.Category?.Trim() ?? diseases.Category;
+
+            var duplicateExists = await _context.Diseases.AnyAsync(a =>
+                a.DiseaseID != id &&
+                a.Name.ToLower() == newName.ToLower() &&
+                a.Category.ToLower() == newCategory.ToLower()
+            );
+
+            if (duplicateExists)
+                return Conflict("Another Diseases with the same name and category already exists.");
+
+            diseases.Name = newName;
+            diseases.Category = newCategory;
+            diseases.UpdatedAt = DateTime.UtcNow;
+            diseases.UpdatedBy = "Admin";
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Diseases updated successfully"
+            });
+        }
+
+
+        // Soft deletes an allergen by setting IsDeleted to true and updating DeletedAt timestamp.
+        [HttpDelete("allergens/{id}")]
+        public async Task<IActionResult> DeleteAllergen(int id)
+        {
+            var allergen = await _context.Allergies
+                .FirstOrDefaultAsync(a => a.AllergyID == id && !a.IsDeleted);
+
+            if (allergen == null)
+                return NotFound("Allergen not found or already deleted.");
+
+            allergen.IsDeleted = true;
+            allergen.DeletedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Allergen deleted successfully"
+            });
+        }
+
+        // Soft deletes a disease by setting IsDeleted to true and updating DeletedAt timestamp.
+        [HttpDelete("diseases/{id}")]
+        public async Task<IActionResult> DeleteDiseases(int id)
+        {
+            var diseases = await _context.Diseases
+                .FirstOrDefaultAsync(a => a.DiseaseID == id && !a.IsDeleted);
+
+            if (diseases == null)
+                return NotFound("Diseases not found or already deleted.");
+
+            diseases.IsDeleted = true;
+            diseases.DeletedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Diseases deleted successfully"
+            });
+        }
 
     }
 }
