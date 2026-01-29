@@ -69,6 +69,10 @@ namespace SafeBit.Api.Model
         public string? PasswordResetToken { get; set; }
         public DateTime? PasswordResetTokenExpiry { get; set; }
 
+
+        public string? ActiveJti { get; set; }
+        public DateTime? LastLogoutAt { get; set; }
+
     }
 
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SafeBit.Api.Data;
@@ -11,9 +12,11 @@ using SafeBit.Api.Data;
 namespace SafeBit.Api.Migrations
 {
     [DbContext(typeof(SafeBiteDbContext))]
-    partial class SafeBiteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260126195505_AddLogoutSupport")]
+    partial class AddLogoutSupport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,9 +41,6 @@ namespace SafeBit.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -63,7 +63,7 @@ namespace SafeBit.Api.Migrations
                         {
                             AllergyID = 1,
                             Category = "Food",
-                            CreatedAt = new DateTime(2026, 1, 28, 19, 8, 29, 993, DateTimeKind.Utc).AddTicks(9625),
+                            CreatedAt = new DateTime(2026, 1, 26, 19, 55, 5, 552, DateTimeKind.Utc).AddTicks(6981),
                             IsDeleted = false,
                             Name = "Peanuts"
                         },
@@ -71,7 +71,7 @@ namespace SafeBit.Api.Migrations
                         {
                             AllergyID = 2,
                             Category = "Dairy",
-                            CreatedAt = new DateTime(2026, 1, 28, 19, 8, 29, 993, DateTimeKind.Utc).AddTicks(9627),
+                            CreatedAt = new DateTime(2026, 1, 26, 19, 55, 5, 552, DateTimeKind.Utc).AddTicks(6984),
                             IsDeleted = false,
                             Name = "Milk"
                         },
@@ -79,7 +79,7 @@ namespace SafeBit.Api.Migrations
                         {
                             AllergyID = 3,
                             Category = "Food",
-                            CreatedAt = new DateTime(2026, 1, 28, 19, 8, 29, 993, DateTimeKind.Utc).AddTicks(9628),
+                            CreatedAt = new DateTime(2026, 1, 26, 19, 55, 5, 552, DateTimeKind.Utc).AddTicks(6985),
                             IsDeleted = false,
                             Name = "Eggs"
                         },
@@ -87,7 +87,7 @@ namespace SafeBit.Api.Migrations
                         {
                             AllergyID = 4,
                             Category = "Food",
-                            CreatedAt = new DateTime(2026, 1, 28, 19, 8, 29, 993, DateTimeKind.Utc).AddTicks(9629),
+                            CreatedAt = new DateTime(2026, 1, 26, 19, 55, 5, 552, DateTimeKind.Utc).AddTicks(6986),
                             IsDeleted = false,
                             Name = "Seafood"
                         });
@@ -106,9 +106,6 @@ namespace SafeBit.Api.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsDeleted")
@@ -133,7 +130,7 @@ namespace SafeBit.Api.Migrations
                         {
                             DiseaseID = 1,
                             Category = "Chronic",
-                            CreatedAt = new DateTime(2026, 1, 28, 19, 8, 29, 993, DateTimeKind.Utc).AddTicks(9642),
+                            CreatedAt = new DateTime(2026, 1, 26, 19, 55, 5, 552, DateTimeKind.Utc).AddTicks(6998),
                             IsDeleted = false,
                             Name = "Diabetes"
                         },
@@ -141,7 +138,7 @@ namespace SafeBit.Api.Migrations
                         {
                             DiseaseID = 2,
                             Category = "Digestive",
-                            CreatedAt = new DateTime(2026, 1, 28, 19, 8, 29, 993, DateTimeKind.Utc).AddTicks(9643),
+                            CreatedAt = new DateTime(2026, 1, 26, 19, 55, 5, 552, DateTimeKind.Utc).AddTicks(6999),
                             IsDeleted = false,
                             Name = "Celiac Disease"
                         },
@@ -149,7 +146,7 @@ namespace SafeBit.Api.Migrations
                         {
                             DiseaseID = 3,
                             Category = "Chronic",
-                            CreatedAt = new DateTime(2026, 1, 28, 19, 8, 29, 993, DateTimeKind.Utc).AddTicks(9644),
+                            CreatedAt = new DateTime(2026, 1, 26, 19, 55, 5, 552, DateTimeKind.Utc).AddTicks(7000),
                             IsDeleted = false,
                             Name = "Hypertension"
                         });
@@ -192,9 +189,6 @@ namespace SafeBit.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UserID"));
 
-                    b.Property<string>("ActiveJti")
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -221,9 +215,6 @@ namespace SafeBit.Api.Migrations
 
                     b.Property<bool>("IsSuspended")
                         .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastLogoutAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastName")
                         .HasMaxLength(50)
