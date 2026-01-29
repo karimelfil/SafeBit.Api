@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BCrypt.Net;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -7,11 +9,12 @@ using SafeBit.Api.DTOs;
 using SafeBit.Api.DTOs.Register;
 using SafeBit.Api.Model;
 using SafeBit.Api.Model.Enums;
+using SafeBit.Api.Services;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using BCrypt.Net; 
 
 namespace SafeBite.API.Controllers
 {
@@ -21,11 +24,13 @@ namespace SafeBite.API.Controllers
     {
         private readonly SafeBiteDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly EmailService _emailService;
 
-        public AuthController(SafeBiteDbContext context, IConfiguration configuration)
+        public AuthController(SafeBiteDbContext context, IConfiguration configuration, EmailService emailService    )
         {
             _context = context;
             _configuration = configuration;
+            _emailService = emailService;
         }
 
         // Registers a new user by validating input, ensuring email uniqueness,
@@ -148,45 +153,149 @@ namespace SafeBite.API.Controllers
             });
         }
 
-
-
-
-
-
-
-
-
-        // JWT TOKEN GENERATION
-        private string GenerateJwtToken(User user, string roleType)
+        /// Generates a secure password reset token, stores it with an expiration time,
+        /// and sends a password reset link to the user's email if the account exists.
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto request)
         {
-            var jwtSettings = _configuration.GetSection("Jwt");
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSettings["Key"]!)
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u =>
+                    u.Email == request.Email &&
+                    !u.IsDeleted);
+
+            if (user == null)
+                return Ok("If the email exists, a reset link has been sent.");
+
+            var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+            var hashedToken = BCrypt.Net.BCrypt.HashPassword(rawToken);
+
+            user.PasswordResetToken = hashedToken;
+            user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
+
+            await _context.SaveChangesAsync();
+
+            var resetLink = $"http://localhost:3000/reset-password?token={Uri.EscapeDataString(rawToken)}";
+
+            await _emailService.SendAsync(
+                user.Email,
+                "Reset your SafeBite password",
+                $"<p>Click below to reset your password:</p><a href='{resetLink}'>Reset Password</a>"
             );
 
-            var claims = new List<Claim>
+            return Ok("If the email exists, a reset link has been sent.");
+        }
+
+
+        /// Resets a user's password using a valid, unexpired password reset token.
+        /// Contains the reset token, new password, and confirmation password.
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto request)
+        {
+            if (request.NewPassword != request.ConfirmPassword)
+                return BadRequest("Passwords do not match.");
+
+            var decodedToken = WebUtility.UrlDecode(request.Token);
+
+            var users = await _context.Users
+                .Where(u =>
+                    u.PasswordResetToken != null &&
+                    u.PasswordResetTokenExpiry > DateTime.UtcNow &&
+                    !u.IsDeleted)
+                .ToListAsync();
+
+            var user = users.FirstOrDefault(u =>
+                BCrypt.Net.BCrypt.Verify(decodedToken, u.PasswordResetToken!));
+
+            if (user == null)
+                return BadRequest("Invalid or expired token.");
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.PasswordResetToken = null;
+            user.PasswordResetTokenExpiry = null;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Password has been reset successfully.");
+        }
+
+
+        /// The user is identified from the JWT token (NameIdentifier claim).
+        /// Once deactivated, the account is marked as suspended and cannot be used to log in.
+        /// A confirmation email is sent after successful deactivation.
+        [Authorize(Roles = "User")]
+        [HttpPost("deactivate-account")]
+        public async Task<IActionResult> DeactivateAccount()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+                return Unauthorized("Invalid token.");
+
+            int userId = int.Parse(userIdClaim.Value);
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u =>
+                    u.UserID == userId &&
+                    !u.IsDeleted &&
+                    !u.IsSuspended);
+
+            if (user == null)
+                return BadRequest("User not found or already deactivated.");
+
+            user.IsSuspended = true;
+            user.Status = "Deactivated";
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            await _emailService.SendAsync(
+                user.Email,
+                "Your SafeBite account has been deactivated",
+                $@"
+            <p>Hello {user.FirstName ?? "User"},</p>
+            <p>Your SafeBite account has been successfully <b>deactivated</b>.</p>
+            <p>If this was a mistake, please contact support.</p>
+            <br/>
+            <p>– SafeBite Team</p>
+        "
+            );
+
+            return Ok("Account deactivated successfully.");
+        }
+
+
+        // Generates a JWT token for the authenticated user with relevant claims.
+        private string GenerateJwtToken(User user, string roleType)
+{
+    var jwtSettings = _configuration.GetSection("Jwt");
+    var key = new SymmetricSecurityKey(
+        Encoding.UTF8.GetBytes(jwtSettings["Key"]!)
+    );
+
+    var claims = new List<Claim>
     {
-        new Claim(JwtRegisteredClaimNames.Sub, user.UserID.ToString()),
-        new Claim(JwtRegisteredClaimNames.Email, user.Email),
-        new Claim(ClaimTypes.Role, roleType),
-        new Claim("role", roleType)
+        new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
+        new Claim(ClaimTypes.Email, user.Email),
+        new Claim(ClaimTypes.Role, roleType)
     };
 
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(
-                    int.Parse(jwtSettings["DurationInMinutes"]!)
-                ),
-                signingCredentials: new SigningCredentials(
-                    key,
-                    SecurityAlgorithms.HmacSha256
-                )
-            );
+    var token = new JwtSecurityToken(
+        issuer: jwtSettings["Issuer"],
+        audience: jwtSettings["Audience"],
+        claims: claims,
+        expires: DateTime.UtcNow.AddMinutes(
+            int.Parse(jwtSettings["DurationInMinutes"]!)
+        ),
+        signingCredentials: new SigningCredentials(
+            key,
+            SecurityAlgorithms.HmacSha256
+        )
+    );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+    return new JwtSecurityTokenHandler().WriteToken(token);
+}
+
 
     }
 }
