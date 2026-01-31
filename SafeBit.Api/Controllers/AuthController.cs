@@ -174,7 +174,8 @@ namespace SafeBite.API.Controllers
 
             await _context.SaveChangesAsync();
 
-            var resetLink = $"http://localhost:3000/reset-password?token={Uri.EscapeDataString(rawToken)}";
+            var resetLink = $"http://localhost:5173/reset-password?token={Uri.EscapeDataString(rawToken)}";
+
 
             await _emailService.SendAsync(
                 user.Email,
@@ -194,8 +195,6 @@ namespace SafeBite.API.Controllers
             if (request.NewPassword != request.ConfirmPassword)
                 return BadRequest("Passwords do not match.");
 
-            var decodedToken = WebUtility.UrlDecode(request.Token);
-
             var users = await _context.Users
                 .Where(u =>
                     u.PasswordResetToken != null &&
@@ -204,7 +203,8 @@ namespace SafeBite.API.Controllers
                 .ToListAsync();
 
             var user = users.FirstOrDefault(u =>
-                BCrypt.Net.BCrypt.Verify(decodedToken, u.PasswordResetToken!));
+                BCrypt.Net.BCrypt.Verify(request.Token, u.PasswordResetToken!)
+            );
 
             if (user == null)
                 return BadRequest("Invalid or expired token.");
@@ -218,6 +218,7 @@ namespace SafeBite.API.Controllers
 
             return Ok("Password has been reset successfully.");
         }
+
 
 
         /// The user is identified from the JWT token (NameIdentifier claim).
