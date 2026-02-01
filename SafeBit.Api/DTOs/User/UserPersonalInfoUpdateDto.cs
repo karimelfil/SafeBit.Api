@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SafeBit.Api.DTOs.User
 {
-	public class UserPersonalInfoDto
+	public class UserPersonalInfoUpdateDto
 	{
 		[Required]
 		public int UserId { get; set; }
@@ -14,23 +14,14 @@ namespace SafeBit.Api.DTOs.User
 		[StringLength(50, ErrorMessage = "Last name cannot exceed 50 characters.")]
 		public string? LastName { get; set; }
 
-		[EmailAddress(ErrorMessage = "Invalid email address.")]
-		[StringLength(100)]
-		public string? Email { get; set; }
-
 		[Phone(ErrorMessage = "Invalid phone number.")]
 		[StringLength(20)]
 		public string? Phone { get; set; }
 
 		[DataType(DataType.Date)]
-		public DateTime? DateOfBirth { get; set; }
+		public DateTime? DateOfBirth { get; set; } // optional update
 
 		[EnumDataType(typeof(Gender), ErrorMessage = "Invalid gender value.")]
 		public Gender? Gender { get; set; }
-
-		// 🔽 added fields
-		public string? Status { get; set; }
-
-		public DateTime Registration_Date { get; set; }
 	}
 }

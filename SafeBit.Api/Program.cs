@@ -12,13 +12,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ====================== DATABASE ======================
 builder.Services.AddDbContext<SafeBiteDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsql =>
-        {
-            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "safebit");
-        }
-    )
+	options.UseNpgsql(
+		builder.Configuration.GetConnectionString("DefaultConnection"),
+		npgsql =>
+		{
+			npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "safebit");
+		}
+	)
 );
 
 // ====================== JWT CONFIG ======================
@@ -26,54 +26,54 @@ var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
 
 builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
+	.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+	.AddJwtBearer(options =>
+	{
+		options.TokenValidationParameters = new TokenValidationParameters
+		{
+			ValidateIssuer = true,
+			ValidateAudience = true,
+			ValidateLifetime = true,
+			ValidateIssuerSigningKey = true,
 
-            ValidIssuer = jwtSettings["Issuer"],
-            ValidAudience = jwtSettings["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(key),
+			ValidIssuer = jwtSettings["Issuer"],
+			ValidAudience = jwtSettings["Audience"],
+			IssuerSigningKey = new SymmetricSecurityKey(key),
 
-            RoleClaimType = ClaimTypes.Role,
-            NameClaimType = ClaimTypes.NameIdentifier
-        };
+			RoleClaimType = ClaimTypes.Role,
+			NameClaimType = ClaimTypes.NameIdentifier
+		};
 
-        // ====================== TOKEN VALIDATION EVENTS ======================
-        options.Events = new JwtBearerEvents
-        {
-            OnTokenValidated = async context =>
-            {
-                var db = context.HttpContext.RequestServices
-                    .GetRequiredService<SafeBiteDbContext>();
+		// ====================== TOKEN VALIDATION EVENTS ======================
+		options.Events = new JwtBearerEvents
+		{
+			OnTokenValidated = async context =>
+			{
+				var db = context.HttpContext.RequestServices
+					.GetRequiredService<SafeBiteDbContext>();
 
-                var userId = context.Principal?
-                    .FindFirstValue(ClaimTypes.NameIdentifier);
+				var userId = context.Principal?
+					.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                var jti = context.Principal?
-                    .FindFirstValue(JwtRegisteredClaimNames.Jti);
+				var jti = context.Principal?
+					.FindFirstValue(JwtRegisteredClaimNames.Jti);
 
-                if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(jti))
-                {
-                    context.Fail("Invalid token");
-                    return;
-                }
+				if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(jti))
+				{
+					context.Fail("Invalid token");
+					return;
+				}
 
-                var user = await db.Users.FindAsync(int.Parse(userId));
+				var user = await db.Users.FindAsync(int.Parse(userId));
 
-                // Token revoked or user deleted/suspended
-                if (user == null || user.ActiveJti != jti || user.IsDeleted || user.IsSuspended)
-                {
-                    context.Fail("Token revoked");
-                }
-            }
-        };
-    });
+				// Token revoked or user deleted/suspended
+				if (user == null || user.ActiveJti != jti || user.IsDeleted || user.IsSuspended)
+				{
+					context.Fail("Token revoked");
+				}
+			}
+		};
+	});
 
 
 // ====================== AUTHORIZATION ======================
@@ -87,30 +87,30 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Enter: Bearer {your JWT token}"
-    });
+	c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+	{
+		Name = "Authorization",
+		Type = SecuritySchemeType.Http,
+		Scheme = "Bearer",
+		BearerFormat = "JWT",
+		In = ParameterLocation.Header,
+		Description = "Enter: Bearer {your JWT token}"
+	});
 
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
+	c.AddSecurityRequirement(new OpenApiSecurityRequirement
+	{
+		{
+			new OpenApiSecurityScheme
+			{
+				Reference = new OpenApiReference
+				{
+					Type = ReferenceType.SecurityScheme,
+					Id = "Bearer"
+				}
+			},
+			Array.Empty<string>()
+		}
+	});
 });
 
 var app = builder.Build();
@@ -118,16 +118,14 @@ var app = builder.Build();
 // ====================== MIDDLEWARE ======================
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+	app.UseSwagger();
+	app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication(); 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 app.Run();
-
-

@@ -95,7 +95,7 @@ namespace SafeBit.Api.Controllers
         // Updates user information based on provided data.
         [HttpPut("users/{userId:int}")]
         public async Task<IActionResult> UpdateUser(
-     int userId,
+ int userId,
      [FromBody] AdminUpdateUserDto updateData)
         {
             var result = await _context.Users
