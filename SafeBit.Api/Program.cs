@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -6,7 +7,6 @@ using SafeBit.Api.Data;
 using SafeBit.Api.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,11 +21,40 @@ builder.Services.AddDbContext<SafeBiteDbContext>(options =>
 	)
 );
 
+// ====================== CORS ======================
+const string CorsPolicy = "_allowFrontend";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsPolicy, policy =>
+        policy.WithOrigins(
+                "http://localhost:5173",     // Vite dev
+                "http://192.168.18.10:5173"  // same network access
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()
+    );
+});
+
 // ====================== JWT CONFIG ======================
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
 
 builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = false; // for dev only
+        options.SaveToken = true;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
 	.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 	.AddJwtBearer(options =>
 	{
@@ -36,6 +65,14 @@ builder.Services
 			ValidateLifetime = true,
 			ValidateIssuerSigningKey = true,
 
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings["Issuer"],
+
+            ValidateAudience = true,
+            ValidAudience = jwtSettings["Audience"],
+
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero, // tokens expire exactly at expiration
 			ValidIssuer = jwtSettings["Issuer"],
 			ValidAudience = jwtSettings["Audience"],
 			IssuerSigningKey = new SymmetricSecurityKey(key),
@@ -74,7 +111,6 @@ builder.Services
 			}
 		};
 	});
-
 
 // ====================== AUTHORIZATION ======================
 builder.Services.AddAuthorization();
@@ -116,6 +152,8 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // ====================== MIDDLEWARE ======================
+app.UseCors(CorsPolicy);
+
 if (app.Environment.IsDevelopment())
 {
 	app.UseSwagger();
@@ -128,4 +166,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.Run();
 app.Run();
