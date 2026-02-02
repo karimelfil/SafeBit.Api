@@ -260,6 +260,7 @@ namespace SafeBit.Api.Controllers
         {
             var allergens = await _context.Allergies
                 .AsNoTracking()
+                .Where(a => !a.IsDeleted)
                 .Select(a => new AdminAllergenDto
                 {
                     Id = a.AllergyID,
@@ -277,7 +278,9 @@ namespace SafeBit.Api.Controllers
         public async Task<IActionResult> GetAllDiseases()
         {
             var diseases = await _context.Diseases
+
                 .AsNoTracking()
+                .Where(a => !a.IsDeleted)
                 .Select(a => new AdminDiseasesDto
                 {
                     Id = a.DiseaseID,
