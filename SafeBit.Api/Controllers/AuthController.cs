@@ -174,17 +174,23 @@ namespace SafeBite.API.Controllers
 
             await _context.SaveChangesAsync();
 
-            var resetLink = $"http://localhost:5173/reset-password?token={Uri.EscapeDataString(rawToken)}";
-
+            var resetLink =
+                $"http://192.168.18.10:5173/reset-password?token={Uri.EscapeDataString(rawToken)}";
 
             await _emailService.SendAsync(
                 user.Email,
                 "Reset your SafeBite password",
-                $"<p>Click below to reset your password:</p><a href='{resetLink}'>Reset Password</a>"
+                $@"
+        <p>You requested to reset your password.</p>
+        <p>Click below to reset:</p>
+        <a href='{resetLink}'>Reset Password</a>
+        <p>This link expires in 1 hour.</p>
+        "
             );
 
             return Ok("If the email exists, a reset link has been sent.");
         }
+
 
 
         /// Resets a user's password using a valid, unexpired password reset token.
@@ -192,32 +198,34 @@ namespace SafeBite.API.Controllers
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword(ResetPasswordDto request)
         {
-            if (request.NewPassword != request.ConfirmPassword)
-                return BadRequest("Passwords do not match.");
-
             var users = await _context.Users
-                .Where(u =>
-                    u.PasswordResetToken != null &&
-                    u.PasswordResetTokenExpiry > DateTime.UtcNow &&
-                    !u.IsDeleted)
+                .Where(u => u.PasswordResetToken != null &&
+                            u.PasswordResetTokenExpiry > DateTime.UtcNow)
                 .ToListAsync();
 
             var user = users.FirstOrDefault(u =>
-                BCrypt.Net.BCrypt.Verify(request.Token, u.PasswordResetToken!)
-            );
+                BCrypt.Net.BCrypt.Verify(request.Token, u.PasswordResetToken));
 
             if (user == null)
                 return BadRequest("Invalid or expired token.");
 
+            if (request.NewPassword != request.ConfirmPassword)
+                return BadRequest("Passwords do not match.");
+
+            if (request.NewPassword.Length < 8)
+                return BadRequest("Password must be at least 8 characters.");
+
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+
+
             user.PasswordResetToken = null;
             user.PasswordResetTokenExpiry = null;
-            user.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
-            return Ok("Password has been reset successfully.");
+            return Ok("Password reset successfully.");
         }
+
 
 
 

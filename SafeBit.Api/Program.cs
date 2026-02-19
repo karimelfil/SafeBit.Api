@@ -1,24 +1,29 @@
-﻿using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
+using OfficeOpenXml;
 using SafeBit.Api.Data;
 using SafeBit.Api.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// EPPlus license 
+ExcelPackage.License.SetNonCommercialOrganization("SafeBit");
+
 // ====================== DATABASE ======================
 builder.Services.AddDbContext<SafeBiteDbContext>(options =>
-	options.UseNpgsql(
-		builder.Configuration.GetConnectionString("DefaultConnection"),
-		npgsql =>
-		{
-			npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "safebit");
-		}
-	)
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsql =>
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "safebit");
+        }
+    )
 );
 
 // ====================== CORS ======================
@@ -96,52 +101,57 @@ builder.Services
         };
     });
 
+
+
 // ====================== AUTHORIZATION ======================
 builder.Services.AddAuthorization();
 
 // ====================== SERVICES ======================
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<MenuAnalysisService>();
+builder.Services.AddHttpClient<AiAgentService>();
 builder.Services.AddControllers();
 
 // ====================== SWAGGER WITH JWT ======================
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-	c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-	{
-		Name = "Authorization",
-		Type = SecuritySchemeType.Http,
-		Scheme = "Bearer",
-		BearerFormat = "JWT",
-		In = ParameterLocation.Header,
-		Description = "Enter: Bearer {your JWT token}"
-	});
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter: Bearer {your JWT token}"
+    });
 
-	c.AddSecurityRequirement(new OpenApiSecurityRequirement
-	{
-		{
-			new OpenApiSecurityScheme
-			{
-				Reference = new OpenApiReference
-				{
-					Type = ReferenceType.SecurityScheme,
-					Id = "Bearer"
-				}
-			},
-			Array.Empty<string>()
-		}
-	});
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
 var app = builder.Build();
+
 
 // ====================== MIDDLEWARE ======================
 app.UseCors(CorsPolicy);
 
 if (app.Environment.IsDevelopment())
 {
-	app.UseSwagger();
-	app.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();

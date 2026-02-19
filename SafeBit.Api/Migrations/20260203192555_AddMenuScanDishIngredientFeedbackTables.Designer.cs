@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SafeBit.Api.Data;
@@ -11,9 +12,11 @@ using SafeBit.Api.Data;
 namespace SafeBit.Api.Migrations
 {
     [DbContext(typeof(SafeBiteDbContext))]
-    partial class SafeBiteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260203192555_AddMenuScanDishIngredientFeedbackTables")]
+    partial class AddMenuScanDishIngredientFeedbackTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -63,7 +66,7 @@ namespace SafeBit.Api.Migrations
                         {
                             AllergyID = 1,
                             Category = "Food",
-                            CreatedAt = new DateTime(2026, 2, 10, 19, 22, 18, 616, DateTimeKind.Utc).AddTicks(7720),
+                            CreatedAt = new DateTime(2026, 2, 3, 19, 25, 55, 205, DateTimeKind.Utc).AddTicks(902),
                             IsDeleted = false,
                             Name = "Peanuts"
                         },
@@ -71,7 +74,7 @@ namespace SafeBit.Api.Migrations
                         {
                             AllergyID = 2,
                             Category = "Dairy",
-                            CreatedAt = new DateTime(2026, 2, 10, 19, 22, 18, 616, DateTimeKind.Utc).AddTicks(7722),
+                            CreatedAt = new DateTime(2026, 2, 3, 19, 25, 55, 205, DateTimeKind.Utc).AddTicks(904),
                             IsDeleted = false,
                             Name = "Milk"
                         },
@@ -79,7 +82,7 @@ namespace SafeBit.Api.Migrations
                         {
                             AllergyID = 3,
                             Category = "Food",
-                            CreatedAt = new DateTime(2026, 2, 10, 19, 22, 18, 616, DateTimeKind.Utc).AddTicks(7723),
+                            CreatedAt = new DateTime(2026, 2, 3, 19, 25, 55, 205, DateTimeKind.Utc).AddTicks(905),
                             IsDeleted = false,
                             Name = "Eggs"
                         },
@@ -87,7 +90,7 @@ namespace SafeBit.Api.Migrations
                         {
                             AllergyID = 4,
                             Category = "Food",
-                            CreatedAt = new DateTime(2026, 2, 10, 19, 22, 18, 616, DateTimeKind.Utc).AddTicks(7724),
+                            CreatedAt = new DateTime(2026, 2, 3, 19, 25, 55, 205, DateTimeKind.Utc).AddTicks(906),
                             IsDeleted = false,
                             Name = "Seafood"
                         });
@@ -133,7 +136,7 @@ namespace SafeBit.Api.Migrations
                         {
                             DiseaseID = 1,
                             Category = "Chronic",
-                            CreatedAt = new DateTime(2026, 2, 10, 19, 22, 18, 616, DateTimeKind.Utc).AddTicks(7743),
+                            CreatedAt = new DateTime(2026, 2, 3, 19, 25, 55, 205, DateTimeKind.Utc).AddTicks(921),
                             IsDeleted = false,
                             Name = "Diabetes"
                         },
@@ -141,7 +144,7 @@ namespace SafeBit.Api.Migrations
                         {
                             DiseaseID = 2,
                             Category = "Digestive",
-                            CreatedAt = new DateTime(2026, 2, 10, 19, 22, 18, 616, DateTimeKind.Utc).AddTicks(7744),
+                            CreatedAt = new DateTime(2026, 2, 3, 19, 25, 55, 205, DateTimeKind.Utc).AddTicks(922),
                             IsDeleted = false,
                             Name = "Celiac Disease"
                         },
@@ -149,7 +152,7 @@ namespace SafeBit.Api.Migrations
                         {
                             DiseaseID = 3,
                             Category = "Chronic",
-                            CreatedAt = new DateTime(2026, 2, 10, 19, 22, 18, 616, DateTimeKind.Utc).AddTicks(7745),
+                            CreatedAt = new DateTime(2026, 2, 3, 19, 25, 55, 205, DateTimeKind.Utc).AddTicks(923),
                             IsDeleted = false,
                             Name = "Hypertension"
                         });
@@ -283,6 +286,9 @@ namespace SafeBit.Api.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DishName")
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
