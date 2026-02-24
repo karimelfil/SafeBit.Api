@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SafeBit.Api.Data;
 using SafeBit.Api.DTOs.Feedback;
 using SafeBit.Api.Model;
+using SafeBit.Api.Model.Enums;
 using System.Security.Claims;
 
 namespace SafeBit.Api.Controllers
@@ -83,6 +84,108 @@ namespace SafeBit.Api.Controllers
                 message = "Feedback submitted successfully.",
                 reportId = report.ReportID,
                 status = report.Status.ToString()
+            });
+        }
+
+
+        private static string FormatReportCode(int reportId) => $"RPT{reportId:D3}";
+        private static string FormatDishCode(int dishId) => $"DISH{dishId:D3}";
+        private static string FormatUserCode(int userId) => $"USR{userId:D3}";
+
+        private static string StatusToUiString(FeedbackStatus status)
+        {
+            return status switch
+            {
+                FeedbackStatus.Pending => "pending",
+                FeedbackStatus.Reviewed => "reviewed",
+                FeedbackStatus.Resolved => "resolved",
+                _ => "pending"
+            };
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<ActionResult> GetAllUserFeedbackReports()
+        {
+            var query = _db.FeedbackReports
+                .AsNoTracking()
+                .Where(r => !r.IsDeleted)
+                .Include(r => r.Dish)
+                .Include(r => r.User)
+                .AsQueryable();
+
+            var result = await query
+                .OrderByDescending(r => r.SubmittedAt)
+                .Select(r => new FeedbackReportListItemDto
+                {
+                    ReportID = FormatReportCode(r.ReportID),
+                    DishName = r.Dish.DishName,
+                    UserEmail = r.User.Email,
+                    Status = StatusToUiString(r.Status),
+                    SubmittedAt = r.SubmittedAt
+                })
+                .ToListAsync();
+
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("{reportId:int}")]
+        public async Task<ActionResult> GetFeedbackReportDetails(int reportId)
+        {
+            var report = await _db.FeedbackReports
+                .AsNoTracking()
+                .Where(r => !r.IsDeleted && r.ReportID == reportId)
+                .Include(r => r.Dish)
+                .Include(r => r.User)
+                .FirstOrDefaultAsync();
+
+            if (report == null)
+                return NotFound(new { message = "Feedback report not found." });
+
+            var dto = new FeedbackReportDetailsDto
+            {
+                ReportID = FormatReportCode(report.ReportID),
+                Status = StatusToUiString(report.Status),
+
+                UserEmail = report.User.Email,
+                UserID = FormatUserCode(report.UserID),
+
+                DishName = report.Dish.DishName,
+                DishID = FormatDishCode(report.DishID),
+
+                SubmittedAt = report.SubmittedAt,
+                ReportMessage = report.Message
+            };
+
+            return Ok(dto);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{reportId:int}/status")]
+        public async Task<ActionResult> UpdateFeedbackReportStatus(
+            int reportId,
+            [FromBody] UpdateFeedbackStatusRequestDto request)
+        {
+            var report = await _db.FeedbackReports
+                .Where(r => !r.IsDeleted && r.ReportID == reportId)
+                .FirstOrDefaultAsync();
+
+            if (report == null)
+                return NotFound(new { message = "Feedback report not found." });
+
+            report.Status = request.Status;
+            report.UpdatedAt = DateTime.UtcNow;
+            report.UpdatedBy = request.UpdatedBy;
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                reportID = FormatReportCode(report.ReportID),
+                status = StatusToUiString(report.Status),
+                updatedAt = report.UpdatedAt,
+                updatedBy = report.UpdatedBy
             });
         }
     }

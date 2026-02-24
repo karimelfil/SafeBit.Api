@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
@@ -12,10 +13,10 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// EPPlus license 
+
 ExcelPackage.License.SetNonCommercialOrganization("SafeBit");
 
-// ====================== DATABASE ======================
+
 builder.Services.AddDbContext<SafeBiteDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -26,14 +27,17 @@ builder.Services.AddDbContext<SafeBiteDbContext>(options =>
     )
 );
 
-// ====================== CORS ======================
+
 const string CorsPolicy = "_allowFrontend";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(CorsPolicy, policy =>
         policy.WithOrigins(
-                "http://localhost:5173",     // Vite dev
-                "http://192.168.18.10:5173"  // same network access
+                "http://localhost:5173",
+                "http://172.22.128.1:5173",
+                "http://192.168.56.1:5173",
+                "http://192.168.18.10:5173",
+                "https://5mkn7tb3-5173.euw.devtunnels.ms"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
@@ -41,7 +45,7 @@ builder.Services.AddCors(options =>
     );
 });
 
-// ====================== JWT CONFIG ======================
+
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
 
@@ -53,7 +57,7 @@ builder.Services
     })
     .AddJwtBearer(options =>
     {
-        options.RequireHttpsMetadata = false; // for dev only
+        options.RequireHttpsMetadata = false;
         options.SaveToken = true;
 
         options.TokenValidationParameters = new TokenValidationParameters
@@ -70,7 +74,6 @@ builder.Services
             NameClaimType = ClaimTypes.NameIdentifier
         };
 
-        // ====================== TOKEN VALIDATION EVENTS ======================
         options.Events = new JwtBearerEvents
         {
             OnTokenValidated = async context =>
@@ -103,16 +106,16 @@ builder.Services
 
 
 
-// ====================== AUTHORIZATION ======================
+
 builder.Services.AddAuthorization();
 
-// ====================== SERVICES ======================
+
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<MenuAnalysisService>();
 builder.Services.AddHttpClient<AiAgentService>();
 builder.Services.AddControllers();
 
-// ====================== SWAGGER WITH JWT ======================
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -144,8 +147,10 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+var emailAssetsPath = Path.Combine(builder.Environment.ContentRootPath, "Assets", "Email");
+Directory.CreateDirectory(emailAssetsPath);
 
-// ====================== MIDDLEWARE ======================
+
 app.UseCors(CorsPolicy);
 
 if (app.Environment.IsDevelopment())
@@ -155,11 +160,17 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles(
+    new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(emailAssetsPath),
+        RequestPath = "/email-assets"
+    }
+);
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
 app.Run();

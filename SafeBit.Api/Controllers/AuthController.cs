@@ -181,10 +181,15 @@ namespace SafeBite.API.Controllers
                 user.Email,
                 "Reset your SafeBite password",
                 $@"
-        <p>You requested to reset your password.</p>
-        <p>Click below to reset:</p>
-        <a href='{resetLink}'>Reset Password</a>
-        <p>This link expires in 1 hour.</p>
+        <p>Hello {user.FirstName ?? "User"},</p>
+        <p>We received a request to reset your password.</p>
+        <p>
+            <a href='{resetLink}' style='display:inline-block;background:#0f766e;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;'>
+                Reset Password
+            </a>
+        </p>
+        <p>This secure link expires in 1 hour.</p>
+        <p>If you did not request this, you can safely ignore this message.</p>
         "
             );
 
@@ -264,9 +269,7 @@ namespace SafeBite.API.Controllers
                 $@"
             <p>Hello {user.FirstName ?? "User"},</p>
             <p>Your SafeBite account has been successfully <b>deactivated</b>.</p>
-            <p>If this was a mistake, please contact support.</p>
-            <br/>
-            <p>– SafeBite Team</p>
+            <p>If this was not intended, contact our support team for assistance.</p>
         "
             );
 
@@ -276,7 +279,7 @@ namespace SafeBite.API.Controllers
 
         // Logs out the authenticated user by revoking the active JWT token and recording the logout time.
 
-        [Authorize]
+        
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {

@@ -191,11 +191,8 @@ namespace SafeBit.Api.Controllers
                 "Your SafeBite account has been suspended",
                 $@"
         <p>Hello {user.FirstName ?? "User"},</p>
-
         <p>Your <b>SafeBite account has been suspended</b> by an administrator.</p>
-
-        <br/>
-        <p>– SafeBite Team</p>
+        <p>Please contact support if you believe this action is incorrect.</p>
         "
             );
 
@@ -240,13 +237,8 @@ namespace SafeBit.Api.Controllers
                 "Your SafeBite account has been reactivated",
                 $@"
         <p>Hello {user.FirstName ?? "User"},</p>
-
-        <p>Good news 🎉</p>
-
+        <p>Good news.</p>
         <p>Your <b>SafeBite account has been reactivated</b>. You can now log in and continue using the platform.</p>
-
-        <br/>
-        <p>– SafeBite Team</p>
         "
             );
 

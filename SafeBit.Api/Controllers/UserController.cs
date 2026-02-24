@@ -118,8 +118,6 @@ namespace SafeBit.Api.Controllers
                 <p>Hello {user.FirstName ?? "User"},</p>
                 <p>Your <b>personal information was updated successfully</b>.</p>
                 <p>If you did not make this change, please contact support immediately.</p>
-                <br/>
-                <p>– SafeBite Team</p>
                 ");
 
 			return Ok("Personal information updated successfully.");
