@@ -10,7 +10,7 @@ namespace SafeBit.Api.Controllers
 {
 	[ApiController]
 	[Route("api/user")]
-	// Requires a valid JWT
+
 	public class UserController : ControllerBase
 	{
 		private readonly SafeBiteDbContext _context;
@@ -24,11 +24,9 @@ namespace SafeBit.Api.Controllers
 			_emailService = emailService;
 		}
 
-		// ================================
-		// GET USER PROFILE
-		// ================================
-		[Authorize]
-		[HttpGet("profile/{userId:int}")]
+
+        [Authorize(Roles = "User")]
+        [HttpGet("profile/{userId:int}")]
 		public async Task<IActionResult> GetUserDetails(int userId)
 		{
 			var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -64,11 +62,9 @@ namespace SafeBit.Api.Controllers
 			return Ok(user);
 		}
 
-		// ================================
-		// UPDATE USER PERSONAL INFO
-		// ================================
-		[Authorize]
-		[HttpPatch("profile/{userId:int}")]
+
+        [Authorize(Roles = "User")]
+        [HttpPatch("profile/{userId:int}")]
 		public async Task<IActionResult> UpdatePersonalInfo(
 			int userId,
 			[FromBody] UserPersonalInfoUpdateDto dto)
@@ -90,7 +86,7 @@ namespace SafeBit.Api.Controllers
 			if (user == null)
 				return NotFound("User not found.");
 
-			// ✅ SAFE PARTIAL UPDATES
+	
 			if (dto.FirstName != null)
 				user.FirstName = dto.FirstName;
 
@@ -101,7 +97,7 @@ namespace SafeBit.Api.Controllers
 				user.Phone = dto.Phone;
 
 			if (dto.DateOfBirth.HasValue)
-				user.DateOfBirth = dto.DateOfBirth.Value; // DOB NOT nullable in DB
+				user.DateOfBirth = dto.DateOfBirth.Value; 
 
 			if (dto.Gender.HasValue)
 				user.Gender = dto.Gender.Value;
@@ -110,7 +106,7 @@ namespace SafeBit.Api.Controllers
 
 			await _context.SaveChangesAsync();
 
-			// 📧 Confirmation email
+
 			await _emailService.SendAsync(
 				user.Email,
 				"Your SafeBite profile was updated",
@@ -122,11 +118,9 @@ namespace SafeBit.Api.Controllers
 
 			return Ok("Personal information updated successfully.");
 		}
-		// ================================
-		// GET USER HEALTH INFO
-		// ================================
-		[Authorize]
-		[HttpGet("{userId:int}/health")]
+
+        [Authorize(Roles = "User")]
+        [HttpGet("{userId:int}/health")]
 		public async Task<IActionResult> GetUserHealthInfo(int userId)
 		{
 			var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -145,9 +139,7 @@ namespace SafeBit.Api.Controllers
 			if (!userExists)
 				return NotFound("User not found.");
 
-			// ----------------
-			// Allergies
-			// ----------------
+
 			var allergies = await (
 				from ua in _context.UserAllergies
 				join a in _context.Allergies on ua.AllergyID equals a.AllergyID
@@ -162,9 +154,7 @@ namespace SafeBit.Api.Controllers
 				}
 			).AsNoTracking().ToListAsync();
 
-			// ----------------
-			// Diseases
-			// ----------------
+
 			var diseases = await (
 				from ud in _context.UserDiseases
 				join d in _context.Diseases on ud.DiseaseID equals d.DiseaseID
@@ -188,9 +178,7 @@ namespace SafeBit.Api.Controllers
 
 			return Ok(result);
 		}
-		// ================================
-		// GET ALL ALLERGIES
-		// ================================
+
 		[HttpGet("allergies")]
 		public async Task<IActionResult> GetAllAllergies()
 		{
@@ -207,9 +195,7 @@ namespace SafeBit.Api.Controllers
 
 			return Ok(allergies);
 		}
-		// ================================
-		// GET ALL DISEASES
-		// ================================
+
 		[HttpGet("diseases")]
 		public async Task<IActionResult> GetAllDiseases()
 		{
@@ -226,101 +212,299 @@ namespace SafeBit.Api.Controllers
 
 			return Ok(diseases);
 		}
-		// ================================
-		// UPDATE USER HEALTH PROFILE
-		// ================================
-		[Authorize]
-		[HttpPut("{userId:int}/health")]
-		public async Task<IActionResult> UpdateUserHealthProfile(
-			int userId,
-			[FromBody] UpdateUserHealthProfileDto dto)
-		{
-			if (userId != dto.UserId)
-				return BadRequest("User ID mismatch.");
+        [Authorize(Roles = "User")]
+        [HttpPut("{userId:int}/health")]
+        public async Task<IActionResult> UpdateUserHealthProfile(
+    int userId,
+    [FromBody] UpdateUserHealthProfileDto dto)
+        {
+            if (userId != dto.UserId)
+                return BadRequest("User ID mismatch.");
 
-			var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			if (string.IsNullOrEmpty(currentUserIdStr))
-				return Unauthorized("Invalid token.");
+            var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserIdStr))
+                return Unauthorized("Invalid token.");
 
-			int currentUserId = int.Parse(currentUserIdStr);
-			if (currentUserId != userId)
-				return Forbid("You can only update your own health profile.");
+            int currentUserId = int.Parse(currentUserIdStr);
+            if (currentUserId != userId)
+                return Forbid("You can only update your own health profile.");
 
-			var userExists = await _context.Users
-				.AnyAsync(u => u.UserID == userId && !u.IsDeleted);
+            var userExists = await _context.Users.AnyAsync(u => u.UserID == userId && !u.IsDeleted);
+            if (!userExists)
+                return NotFound("User not found.");
 
-			if (!userExists)
-				return NotFound("User not found.");
+            var incomingAllergyIds = (dto.AllergyIds ?? new List<int>()).Distinct().ToList();
+            var incomingDiseaseIds = (dto.DiseaseIds ?? new List<int>()).Distinct().ToList();
 
-			using var transaction = await _context.Database.BeginTransactionAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-			try
-			{
-				// ----------------------------------
-				// SOFT DELETE EXISTING ALLERGIES
-				// ----------------------------------
-				var existingAllergies = await _context.UserAllergies
-					.Where(ua => ua.UserID == userId && !ua.IsDeleted)
-					.ToListAsync();
+            try
+            {
 
-				foreach (var ua in existingAllergies)
-				{
-					ua.IsDeleted = true;
-					ua.UpdatedAt = DateTime.UtcNow;
-				}
+                var allUserAllergies = await _context.UserAllergies
+                    .Where(x => x.UserID == userId)
+                    .ToListAsync();
 
-				// ----------------------------------
-				// INSERT NEW ALLERGIES
-				// ----------------------------------
-				foreach (var allergyId in dto.AllergyIds.Distinct())
-				{
-					_context.UserAllergies.Add(new Model.UserAllergy
-					{
-						UserID = userId,
-						AllergyID = allergyId,
-						CreatedAt = DateTime.UtcNow,
-						IsDeleted = false
-					});
-				}
+     
+                foreach (var ua in allUserAllergies.Where(x => !x.IsDeleted && !incomingAllergyIds.Contains(x.AllergyID)))
+                {
+                    ua.IsDeleted = true;
+                    ua.UpdatedAt = DateTime.UtcNow;
+                }
 
-				// ----------------------------------
-				// SOFT DELETE EXISTING DISEASES
-				// ----------------------------------
-				var existingDiseases = await _context.UserDiseases
-					.Where(ud => ud.UserID == userId && !ud.IsDeleted)
-					.ToListAsync();
+  
+                foreach (var allergyId in incomingAllergyIds)
+                {
+                    var existing = allUserAllergies.FirstOrDefault(x => x.AllergyID == allergyId);
+                    if (existing != null)
+                    {
+                        if (existing.IsDeleted)
+                        {
+                            existing.IsDeleted = false;
+                            existing.UpdatedAt = DateTime.UtcNow;
+                        }
+                    }
+                    else
+                    {
+                        _context.UserAllergies.Add(new Model.UserAllergy
+                        {
+                            UserID = userId,
+                            AllergyID = allergyId,
+                            CreatedAt = DateTime.UtcNow,
+                            IsDeleted = false
+                        });
+                    }
+                }
 
-				foreach (var ud in existingDiseases)
-				{
-					ud.IsDeleted = true;
-					ud.UpdatedAt = DateTime.UtcNow;
-				}
 
-				// ----------------------------------
-				// INSERT NEW DISEASES
-				// ----------------------------------
-				foreach (var diseaseId in dto.DiseaseIds.Distinct())
-				{
-					_context.UserDiseases.Add(new Model.UserDisease
-					{
-						UserID = userId,
-						DiseaseID = diseaseId,
-						CreatedAt = DateTime.UtcNow,
-						IsDeleted = false
-					});
-				}
+                var allUserDiseases = await _context.UserDiseases
+                    .Where(x => x.UserID == userId)
+                    .ToListAsync();
 
-				await _context.SaveChangesAsync();
-				await transaction.CommitAsync();
+                foreach (var ud in allUserDiseases.Where(x => !x.IsDeleted && !incomingDiseaseIds.Contains(x.DiseaseID)))
+                {
+                    ud.IsDeleted = true;
+                    ud.UpdatedAt = DateTime.UtcNow;
+                }
 
-				return Ok("Health profile updated successfully.");
-			}
-			catch
-			{
-				await transaction.RollbackAsync();
-				throw;
-			}
-		}
+                foreach (var diseaseId in incomingDiseaseIds)
+                {
+                    var existing = allUserDiseases.FirstOrDefault(x => x.DiseaseID == diseaseId);
+                    if (existing != null)
+                    {
+                        if (existing.IsDeleted)
+                        {
+                            existing.IsDeleted = false;
+                            existing.UpdatedAt = DateTime.UtcNow;
+                        }
+                    }
+                    else
+                    {
+                        _context.UserDiseases.Add(new Model.UserDisease
+                        {
+                            UserID = userId,
+                            DiseaseID = diseaseId,
+                            CreatedAt = DateTime.UtcNow,
+                            IsDeleted = false
+                        });
+                    }
+                }
 
-	}
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Ok("Health profile updated successfully.");
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        [Authorize(Roles = "User")]
+        [HttpPost("{userId:int}/health/allergies")]
+        public async Task<IActionResult> AddAllergies(int userId, [FromBody] AddUserAllergiesDto dto)
+        {
+            if (userId != dto.UserId) return BadRequest("User ID mismatch.");
+
+            var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserIdStr)) return Unauthorized("Invalid token.");
+            if (int.Parse(currentUserIdStr) != userId) return Forbid();
+
+            var ids = (dto.AllergyIds ?? new List<int>()).Distinct().ToList();
+            if (ids.Count == 0) return Ok("Nothing to add.");
+
+            var existing = await _context.UserAllergies
+                .Where(x => x.UserID == userId && ids.Contains(x.AllergyID))
+                .ToListAsync();
+
+            foreach (var allergyId in ids)
+            {
+                var row = existing.FirstOrDefault(x => x.AllergyID == allergyId);
+                if (row != null)
+                {
+                    if (row.IsDeleted)
+                    {
+                        row.IsDeleted = false;
+                        row.UpdatedAt = DateTime.UtcNow;
+                    }
+                
+                }
+                else
+                {
+                    _context.UserAllergies.Add(new Model.UserAllergy
+                    {
+                        UserID = userId,
+                        AllergyID = allergyId,
+                        CreatedAt = DateTime.UtcNow,
+                        IsDeleted = false
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok("Allergies added.");
+        }
+
+        [Authorize(Roles = "User")]
+        [HttpDelete("{userId:int}/health/allergies/{allergyId:int}")]
+        public async Task<IActionResult> DeleteAllergy(int userId, int allergyId)
+        {
+            var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserIdStr)) return Unauthorized("Invalid token.");
+            if (int.Parse(currentUserIdStr) != userId) return Forbid();
+
+            var row = await _context.UserAllergies
+                .FirstOrDefaultAsync(x => x.UserID == userId && x.AllergyID == allergyId && !x.IsDeleted);
+
+            if (row == null) return NotFound("Allergy not found.");
+
+            row.IsDeleted = true;
+            row.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return Ok("Allergy deleted.");
+        }
+
+        [Authorize(Roles = "User")]
+        [HttpPost("{userId:int}/health/diseases")]
+        public async Task<IActionResult> AddDiseases(int userId, [FromBody] AddUserDiseasesDto dto)
+        {
+            if (userId != dto.UserId) return BadRequest("User ID mismatch.");
+
+            var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserIdStr)) return Unauthorized("Invalid token.");
+            if (int.Parse(currentUserIdStr) != userId) return Forbid();
+
+            var ids = (dto.DiseaseIds ?? new List<int>()).Distinct().ToList();
+            if (ids.Count == 0) return Ok("Nothing to add.");
+
+            var existing = await _context.UserDiseases
+                .Where(x => x.UserID == userId && ids.Contains(x.DiseaseID))
+                .ToListAsync();
+
+            foreach (var diseaseId in ids)
+            {
+                var row = existing.FirstOrDefault(x => x.DiseaseID == diseaseId);
+                if (row != null)
+                {
+                    if (row.IsDeleted)
+                    {
+                        row.IsDeleted = false;
+                        row.UpdatedAt = DateTime.UtcNow;
+                    }
+                }
+                else
+                {
+                    _context.UserDiseases.Add(new Model.UserDisease
+                    {
+                        UserID = userId,
+                        DiseaseID = diseaseId,
+                        CreatedAt = DateTime.UtcNow,
+                        IsDeleted = false
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok("Diseases added.");
+        }
+
+        [Authorize(Roles = "User")]
+        [HttpDelete("{userId:int}/health/diseases/{diseaseId:int}")]
+        public async Task<IActionResult> DeleteDisease(int userId, int diseaseId)
+        {
+            var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserIdStr)) return Unauthorized("Invalid token.");
+            if (int.Parse(currentUserIdStr) != userId) return Forbid();
+
+            var row = await _context.UserDiseases
+                .FirstOrDefaultAsync(x => x.UserID == userId && x.DiseaseID == diseaseId && !x.IsDeleted);
+
+            if (row == null) return NotFound("Disease not found.");
+
+            row.IsDeleted = true;
+            row.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return Ok("Disease deleted.");
+        }
+
+
+
+        [Authorize(Roles = "User")]
+        [HttpGet("{userId:int}/health/summary")]
+        public async Task<IActionResult> GetUserHealthSummary(int userId)
+        {
+            var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserIdStr))
+                return Unauthorized("Invalid token.");
+
+            if (int.Parse(currentUserIdStr) != userId)
+                return Forbid("You can only view your own health information.");
+
+            var userExists = await _context.Users
+                .AsNoTracking()
+                .AnyAsync(u => u.UserID == userId && !u.IsDeleted);
+
+            if (!userExists)
+                return NotFound("User not found.");
+
+            var allergies = await (
+                from ua in _context.UserAllergies
+                join a in _context.Allergies on ua.AllergyID equals a.AllergyID
+                where ua.UserID == userId
+                      && !ua.IsDeleted
+                      && !a.IsDeleted
+                select a.Name
+            )
+            .AsNoTracking()
+            .Distinct()
+            .OrderBy(x => x)
+            .ToListAsync();
+
+            var diseases = await (
+                from ud in _context.UserDiseases
+                join d in _context.Diseases on ud.DiseaseID equals d.DiseaseID
+                where ud.UserID == userId
+                      && !ud.IsDeleted
+                      && !d.IsDeleted
+                select d.Name
+            )
+            .AsNoTracking()
+            .Distinct()
+            .OrderBy(x => x)
+            .ToListAsync();
+
+            return Ok(new UserHealthSummaryDto
+            {
+                UserId = userId,
+                Allergies = allergies,
+                Diseases = diseases
+            });
+        }
+
+
+    }
 }
