@@ -1,4 +1,4 @@
-﻿using SafeBit.Api.DTOs.Menu;
+using SafeBit.Api.DTOs.Menu;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -9,12 +9,22 @@ namespace SafeBit.Api.Services
     public class AiAgentService
     {
         private readonly HttpClient _http;
+        private readonly JsonSerializerOptions _jsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
-        public AiAgentService(HttpClient http)
+        public AiAgentService(HttpClient http, IConfiguration configuration)
         {
             _http = http;
-            // Prefer configuration in Program.cs; keep this for now if you want.
-            _http.BaseAddress = new Uri("http://192.168.18.10:8001");
+
+            var baseUrl = configuration["AiAgent:BaseUrl"];
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                throw new InvalidOperationException("Missing AiAgent:BaseUrl configuration.");
+            }
+
+            _http.BaseAddress = new Uri(baseUrl);
             _http.Timeout = TimeSpan.FromSeconds(60);
         }
 
@@ -25,12 +35,16 @@ namespace SafeBit.Api.Services
             using var form = new MultipartFormDataContent();
 
             var imageContent = new StreamContent(menuImage.OpenReadStream());
-            imageContent.Headers.ContentType =
-                new MediaTypeHeaderValue(menuImage.ContentType);
+            var contentType = string.IsNullOrWhiteSpace(menuImage.ContentType)
+                ? "application/octet-stream"
+                : menuImage.ContentType;
+            imageContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
             form.Add(imageContent, "file", menuImage.FileName);
 
             var profileJson = JsonSerializer.Serialize(profile);
-            form.Add(new StringContent(profileJson, Encoding.UTF8), "user_profile_json");
+            form.Add(
+                new StringContent(profileJson, Encoding.UTF8, "application/json"),
+                "user_profile_json");
 
             var response = await _http.PostAsync("/analyze-menu", form);
 
@@ -41,7 +55,7 @@ namespace SafeBit.Api.Services
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<AiAnalyzeMenuResponse>(json);
+            var result = JsonSerializer.Deserialize<AiAnalyzeMenuResponse>(json, _jsonOptions);
 
             if (result == null)
                 throw new HttpRequestException("AI response could not be parsed.");
