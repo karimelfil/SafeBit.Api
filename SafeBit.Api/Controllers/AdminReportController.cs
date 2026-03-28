@@ -1,6 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 using SafeBit.Api.Data;
 using SafeBit.Api.DTOs.Report;
 using SafeBit.Api.Services;
@@ -67,13 +71,13 @@ namespace SafeBit.Api.Controllers
                 response.TotalRecords = total;
 
                 var groups = new Dictionary<string, int>
-        {
-            { "Age 18-25", 0 },
-            { "Age 26-35", 0 },
-            { "Age 36-45", 0 },
-            { "Age 46-60", 0 },
-            { "Age 60+", 0 }
-        };
+                {
+                    { "Age 18-25", 0 },
+                    { "Age 26-35", 0 },
+                    { "Age 36-45", 0 },
+                    { "Age 46-60", 0 },
+                    { "Age 60+", 0 }
+                };
 
                 foreach (var user in users)
                 {
@@ -283,14 +287,14 @@ namespace SafeBit.Api.Controllers
         [HttpPost("export-report")]
         public async Task<IActionResult> ExportReport(ExportReportRequestDto request)
         {
-            // Generate the report data based on the requested type and date range
             var reportResult = await GenerateAnalyticsData(request.ReportType, request.DateRange);
 
             if (reportResult == null || !reportResult.Data.Any())
                 return BadRequest("No data available for export.");
 
-            // Generate CSV 
-            if (request.Format == "CSV")
+            var format = (request.Format ?? "Excel").Trim().ToUpperInvariant();
+
+            if (format == "CSV")
             {
                 var csv = new StringBuilder();
 
@@ -308,15 +312,19 @@ namespace SafeBit.Api.Controllers
                     $"{request.ReportType}_{DateTime.UtcNow:yyyyMMdd}.csv");
             }
 
-            // Default to Excel if not CSV
-            else
+            if (format == "EXCEL" || format == "XLSX")
             {
-                using var package = new OfficeOpenXml.ExcelPackage();
+                using var package = new ExcelPackage();
                 var worksheet = package.Workbook.Worksheets.Add("Report");
 
                 worksheet.Cells[1, 1].Value = "Category";
                 worksheet.Cells[1, 2].Value = "Count";
                 worksheet.Cells[1, 3].Value = "Percentage";
+
+                using (var headerRange = worksheet.Cells[1, 1, 1, 3])
+                {
+                    headerRange.Style.Font.Bold = true;
+                }
 
                 int row = 2;
 
@@ -328,13 +336,85 @@ namespace SafeBit.Api.Controllers
                     row++;
                 }
 
+                worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
                 var fileBytes = package.GetAsByteArray();
 
                 return File(fileBytes,
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     $"{request.ReportType}_{DateTime.UtcNow:yyyyMMdd}.xlsx");
             }
+
+            if (format == "PDF")
+            {
+                QuestPDF.Settings.License = LicenseType.Community;
+
+                var pdfBytes = Document.Create(container =>
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(PageSizes.A4);
+                        page.Margin(30);
+                        page.DefaultTextStyle(x => x.FontSize(11));
+
+                        page.Header().Column(column =>
+                        {
+                            column.Item().Text("SafeBit Analytics Report").FontSize(20).Bold();
+                            column.Item().Text($"Report Type: {request.ReportType}");
+                            column.Item().Text($"Date Range: {request.DateRange}");
+                            column.Item().Text($"Exported At (UTC): {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
+                        });
+
+                        page.Content().PaddingVertical(20).Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(3);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(1);
+                            });
+
+                            table.Header(header =>
+                            {
+                                header.Cell().Element(CellStyle).Text("Category").Bold();
+                                header.Cell().Element(CellStyle).AlignRight().Text("Count").Bold();
+                                header.Cell().Element(CellStyle).AlignRight().Text("Percentage").Bold();
+                            });
+
+                            foreach (var item in reportResult.Data)
+                            {
+                                table.Cell().Element(CellStyle).Text(item.Category);
+                                table.Cell().Element(CellStyle).AlignRight().Text(item.Count.ToString());
+                                table.Cell().Element(CellStyle).AlignRight().Text($"{item.Percentage:0.##}%");
+                            }
+                        });
+
+                        page.Footer().AlignCenter().Text(text =>
+                        {
+                            text.Span("Page ");
+                            text.CurrentPageNumber();
+                            text.Span(" of ");
+                            text.TotalPages();
+                        });
+                    });
+                }).GeneratePdf();
+
+                return File(pdfBytes,
+                    "application/pdf",
+                    $"{request.ReportType}_{DateTime.UtcNow:yyyyMMdd}.pdf");
+            }
+
+            return BadRequest("Invalid export format. Supported formats are CSV, Excel, and PDF.");
         }
+
+        private static IContainer CellStyle(IContainer container)
+        {
+            return container
+                .BorderBottom(1)
+                .BorderColor(Colors.Grey.Lighten2)
+                .PaddingVertical(6)
+                .PaddingHorizontal(4);
+        }
+
         // Helper method to generate analytics data for export
         private async Task<GenerateReportResponseDto> GenerateAnalyticsData(string reportType, string dateRange)
         {

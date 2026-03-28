@@ -12,5 +12,23 @@ namespace SafeBit.Api.DTOs.Menu
 
         [JsonPropertyName("dishes")]
         public List<AiDishDto> Dishes { get; set; } = [];
+
+        [JsonPropertyName("summary")]
+        public AiMenuSummaryDto? Summary { get; set; }
+    }
+
+    public class AiMenuSummaryDto
+    {
+        [JsonPropertyName("safe_to_order")]
+        public List<string> SafeToOrder { get; set; } = [];
+
+        [JsonPropertyName("caution_dishes")]
+        public List<string> CautionDishes { get; set; } = [];
+
+        [JsonPropertyName("risky_dishes")]
+        public List<string> RiskyDishes { get; set; } = [];
+
+        [JsonPropertyName("short_summary")]
+        public string? ShortSummary { get; set; }
     }
 }

@@ -5,6 +5,7 @@ using SafeBit.Api.Data;
 using SafeBit.Api.DTOs.Menu;
 using SafeBit.Api.Services;
 using System.Security.Claims;
+using System.Text.Json.Serialization;
 
 namespace SafeBit.Api.Controllers
 {
@@ -57,6 +58,18 @@ namespace SafeBit.Api.Controllers
                 User.FindFirst(ClaimTypes.NameIdentifier)!.Value
             );
 
+            var user = await _db.Users
+                .AsNoTracking()
+                .Where(u => u.UserID == userId && !u.IsDeleted)
+                .Select(u => new
+                {
+                    u.IsPregnant
+                })
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                return NotFound("User not found.");
+
             var allergies = await (
                 from ua in _db.UserAllergies
                 join a in _db.Allergies on ua.AllergyID equals a.AllergyID
@@ -79,7 +92,8 @@ namespace SafeBit.Api.Controllers
             var profile = new AiUserProfileDto
             {
                 Allergies = allergies,
-                Diseases = diseases
+                Diseases = diseases,
+                IsPregnant = user.IsPregnant
             };
 
       
@@ -87,6 +101,8 @@ namespace SafeBit.Api.Controllers
                 request.File,
                 profile
             );
+
+            NormalizeAiResult(aiResult, profile);
 
 
             var menuId = await _analysisService.CreateMenuAndSaveResultAsync(
@@ -96,12 +112,125 @@ namespace SafeBit.Api.Controllers
                 aiResult
             );
 
+                    var savedDishes = await _db.Dishes
+            .Where(d => d.MenuID == menuId && !d.IsDeleted)
+            .Select(d => new
+            {
+                dishID = d.DishID,
+                dishName = d.DishName
+            })
+            .ToListAsync();
 
             return Ok(new
             {
                 menuId,
-                aiResult
+                aiResult,
+                summary = aiResult.Summary,
+                dishes = savedDishes
+            });
+
+
+
+        }
+
+        private static void NormalizeAiResult(AiAnalyzeMenuResponse aiResult, AiUserProfileDto profile)
+        {
+            foreach (var dish in aiResult.Dishes)
+            {
+                NormalizeDish(dish, profile);
+            }
+
+            aiResult.Summary = BuildSummary(aiResult.Dishes);
+        }
+
+        private static void NormalizeDish(AiDishDto dish, AiUserProfileDto profile)
+        {
+            var ingredients = dish.IngredientsFound
+                .Concat(dish.PredictedIngredients)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .ToList();
+
+            if (IsSafe(dish.SafetyLevel) &&
+                UserNeedsSaltCaution(profile) &&
+                ingredients.Any(ContainsSaltMarker))
+            {
+                dish.SafetyLevel = "CAUTION";
+
+                var cautionNote = "Caution: this dish contains salt, so it should be limited rather than treated as fully safe.";
+                if (!dish.Notes.Contains(cautionNote, StringComparer.OrdinalIgnoreCase))
+                {
+                    dish.Notes.Add(cautionNote);
+                }
+
+                dish.ShortSummary ??= $"{dish.DishName} contains salt, so this user should limit it rather than treat it as fully safe.";
+            }
+        }
+
+        private static AiMenuSummaryDto BuildSummary(IEnumerable<AiDishDto> dishes)
+        {
+            var safeToOrder = dishes
+                .Where(d => IsSafe(d.SafetyLevel))
+                .Select(d => d.DishName)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToList();
+
+            var cautionDishes = dishes
+                .Where(d => IsCaution(d.SafetyLevel))
+                .Select(d => d.DishName)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToList();
+
+            var riskyDishes = dishes
+                .Where(d => IsRisky(d.SafetyLevel))
+                .Select(d => d.DishName)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToList();
+
+            var parts = new List<string>();
+            if (safeToOrder.Count > 0)
+                parts.Add($"Safe to order: {string.Join(", ", safeToOrder)}.");
+            if (riskyDishes.Count > 0)
+                parts.Add($"Not safe: {string.Join(", ", riskyDishes)}.");
+            if (cautionDishes.Count > 0)
+                parts.Add($"Need caution or confirmation: {string.Join(", ", cautionDishes)}.");
+
+            return new AiMenuSummaryDto
+            {
+                SafeToOrder = safeToOrder,
+                CautionDishes = cautionDishes,
+                RiskyDishes = riskyDishes,
+                ShortSummary = parts.Count == 0 ? null : string.Join(" ", parts)
+            };
+        }
+
+        private static bool UserNeedsSaltCaution(AiUserProfileDto profile)
+        {
+            IEnumerable<string> indicators = profile.Allergies.Concat(profile.Diseases);
+
+            return indicators.Any(value =>
+            {
+                var normalized = value.Trim().ToLowerInvariant();
+                return normalized.Contains("salt") ||
+                       normalized.Contains("sodium") ||
+                       normalized.Contains("hypertension") ||
+                       normalized.Contains("high blood pressure");
             });
         }
+
+        private static bool ContainsSaltMarker(string ingredient)
+        {
+            var normalized = ingredient.Trim().ToLowerInvariant();
+            return normalized.Contains("salt") || normalized.Contains("sodium");
+        }
+
+        private static bool IsSafe(string? level) =>
+            string.Equals(level, "SAFE", StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsCaution(string? level) =>
+            string.Equals(level, "CAUTION", StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsRisky(string? level) =>
+            string.Equals(level, "RISKY", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -9,6 +9,7 @@ using System.Text.Json;
     {
         private readonly SafeBiteDbContext _db;
         private readonly IWebHostEnvironment _env;
+        private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
 
         public MenuAnalysisService(SafeBiteDbContext db, IWebHostEnvironment env)
         {
@@ -107,7 +108,7 @@ using System.Text.Json;
                 }
             }
 
-        var dishesJson = JsonSerializer.Serialize(aiResult.Dishes);
+        var aiResultJson = JsonSerializer.Serialize(aiResult, _jsonOptions);
 
         _db.ScanHistories.Add(new ScanHistory
         {
@@ -116,7 +117,7 @@ using System.Text.Json;
             ScanDate = DateTime.UtcNow,
             UploadDate = DateTime.UtcNow,
 
-            ResultsSummary = dishesJson, 
+            ResultsSummary = aiResultJson,
 
             CreatedAt = DateTime.UtcNow
         });

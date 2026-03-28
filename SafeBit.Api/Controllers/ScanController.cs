@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SafeBit.Api.Data;
+using SafeBit.Api.DTOs.Menu;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace SafeBit.Api.Controllers
 {
@@ -12,13 +14,16 @@ namespace SafeBit.Api.Controllers
     public class ScanController : ControllerBase
     {
         private readonly SafeBiteDbContext _db;
+        private readonly JsonSerializerOptions _jsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
         public ScanController(SafeBiteDbContext db)
         {
             _db = db;
         }
 
-        // Get user's scan history with restaurant name and dish counts
         [HttpGet("history")]
         public async Task<IActionResult> GetScanHistory()
         {
@@ -34,27 +39,49 @@ namespace SafeBit.Api.Controllers
                     s.ScanID,
                     RestaurantName = s.MenuUpload.RestaurantName,
                     s.ScanDate,
-
-                    SafeCount = s.MenuUpload.Dishes
-                        .Count(d => d.IsSafe && !d.IsDeleted),
-
-                    UnsafeCount = s.MenuUpload.Dishes
-                        .Count(d => !d.IsSafe && !d.IsDeleted),
-
-                    RiskyCount = 0 
+                    s.ResultsSummary,
+                    Dishes = s.MenuUpload.Dishes
+                        .Where(d => !d.IsDeleted)
+                        .Select(d => new
+                        {
+                            d.IsSafe
+                        })
+                        .ToList()
                 })
                 .ToListAsync();
 
-            return Ok(history);
+            var response = history.Select(s =>
+            {
+                var aiResult = TryDeserializeAiResult(s.ResultsSummary);
+                var safeCount = aiResult?.Summary?.SafeToOrder.Count
+                    ?? aiResult?.Dishes.Count(d => IsSafetyLevel(d.SafetyLevel, "SAFE"))
+                    ?? s.Dishes.Count(d => d.IsSafe);
+                var cautionCount = aiResult?.Summary?.CautionDishes.Count
+                    ?? aiResult?.Dishes.Count(d => IsSafetyLevel(d.SafetyLevel, "CAUTION"))
+                    ?? 0;
+                var riskyCount = aiResult?.Summary?.RiskyDishes.Count
+                    ?? aiResult?.Dishes.Count(d => IsSafetyLevel(d.SafetyLevel, "RISKY"))
+                    ?? s.Dishes.Count(d => !d.IsSafe);
+
+                return new
+                {
+                    s.ScanID,
+                    s.RestaurantName,
+                    s.ScanDate,
+                    SafeCount = safeCount,
+                    CautionCount = cautionCount,
+                    RiskyCount = riskyCount
+                };
+            });
+
+            return Ok(response);
         }
 
-
-        // Get details of a specific scan, including dishes and ingredients
         [HttpGet("{scanId}")]
         public async Task<IActionResult> GetMenuDetails(int scanId)
         {
             var userId = int.Parse(
-                User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value
             );
 
             var scan = await _db.ScanHistories
@@ -67,15 +94,14 @@ namespace SafeBit.Api.Controllers
                     s.ScanDate,
                     RestaurantName = s.MenuUpload.RestaurantName,
                     FilePath = s.MenuUpload.FilePath,
-
+                    s.ResultsSummary,
                     Dishes = s.MenuUpload.Dishes
                         .Where(d => !d.IsDeleted)
                         .Select(d => new
                         {
                             d.DishID,
                             d.DishName,
-                            SafetyStatus = d.IsSafe ? "SAFE" : "UNSAFE",
-
+                            SafetyStatus = d.IsSafe ? "SAFE" : "RISKY",
                             Ingredients = d.DishIngredients
                                 .Where(di => !di.IsDeleted)
                                 .Select(di => di.Ingredient.Name)
@@ -88,8 +114,62 @@ namespace SafeBit.Api.Controllers
             if (scan == null)
                 return NotFound("Scan not found.");
 
-            return Ok(scan);
+            var aiResult = TryDeserializeAiResult(scan.ResultsSummary);
+            var aiDishLookup = aiResult?.Dishes
+                .GroupBy(d => d.DishName.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+            var dishes = scan.Dishes.Select(d =>
+            {
+                AiDishDto? aiDish = null;
+                aiDishLookup?.TryGetValue(d.DishName.Trim(), out aiDish);
+
+                return new
+                {
+                    d.DishID,
+                    d.DishName,
+                    SafetyStatus = aiDish?.SafetyLevel ?? d.SafetyStatus,
+                    Ingredients = d.Ingredients,
+                    DetectedTriggers = aiDish?.DetectedTriggers ?? [],
+                    IngredientsFound = aiDish?.IngredientsFound ?? [],
+                    PredictedIngredients = aiDish?.PredictedIngredients ?? [],
+                    IngredientPredictionUsed = aiDish?.IngredientPredictionUsed ?? false,
+                    Confidence = aiDish?.Confidence,
+                    IngredientCoverage = aiDish?.IngredientCoverage,
+                    NeedsUserConfirmation = aiDish?.NeedsUserConfirmation ?? false,
+                    Conflicts = aiDish?.Conflicts ?? [],
+                    Notes = aiDish?.Notes ?? [],
+                    ShortSummary = aiDish?.ShortSummary
+                };
+            });
+
+            return Ok(new
+            {
+                scan.ScanID,
+                scan.ScanDate,
+                scan.RestaurantName,
+                scan.FilePath,
+                Summary = aiResult?.Summary,
+                Dishes = dishes
+            });
         }
 
+        private AiAnalyzeMenuResponse? TryDeserializeAiResult(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                return null;
+
+            try
+            {
+                return JsonSerializer.Deserialize<AiAnalyzeMenuResponse>(json, _jsonOptions);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static bool IsSafetyLevel(string? level, string expectedLevel) =>
+            string.Equals(level, expectedLevel, StringComparison.OrdinalIgnoreCase);
     }
 }

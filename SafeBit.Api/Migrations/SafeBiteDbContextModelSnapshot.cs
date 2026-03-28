@@ -63,7 +63,7 @@ namespace SafeBit.Api.Migrations
                         {
                             AllergyID = 1,
                             Category = "Food",
-                            CreatedAt = new DateTime(2026, 2, 10, 19, 22, 18, 616, DateTimeKind.Utc).AddTicks(7720),
+                            CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsDeleted = false,
                             Name = "Peanuts"
                         },
@@ -71,7 +71,7 @@ namespace SafeBit.Api.Migrations
                         {
                             AllergyID = 2,
                             Category = "Dairy",
-                            CreatedAt = new DateTime(2026, 2, 10, 19, 22, 18, 616, DateTimeKind.Utc).AddTicks(7722),
+                            CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsDeleted = false,
                             Name = "Milk"
                         },
@@ -79,7 +79,7 @@ namespace SafeBit.Api.Migrations
                         {
                             AllergyID = 3,
                             Category = "Food",
-                            CreatedAt = new DateTime(2026, 2, 10, 19, 22, 18, 616, DateTimeKind.Utc).AddTicks(7723),
+                            CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsDeleted = false,
                             Name = "Eggs"
                         },
@@ -87,7 +87,7 @@ namespace SafeBit.Api.Migrations
                         {
                             AllergyID = 4,
                             Category = "Food",
-                            CreatedAt = new DateTime(2026, 2, 10, 19, 22, 18, 616, DateTimeKind.Utc).AddTicks(7724),
+                            CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsDeleted = false,
                             Name = "Seafood"
                         });
@@ -133,7 +133,7 @@ namespace SafeBit.Api.Migrations
                         {
                             DiseaseID = 1,
                             Category = "Chronic",
-                            CreatedAt = new DateTime(2026, 2, 10, 19, 22, 18, 616, DateTimeKind.Utc).AddTicks(7743),
+                            CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsDeleted = false,
                             Name = "Diabetes"
                         },
@@ -141,7 +141,7 @@ namespace SafeBit.Api.Migrations
                         {
                             DiseaseID = 2,
                             Category = "Digestive",
-                            CreatedAt = new DateTime(2026, 2, 10, 19, 22, 18, 616, DateTimeKind.Utc).AddTicks(7744),
+                            CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsDeleted = false,
                             Name = "Celiac Disease"
                         },
@@ -149,7 +149,7 @@ namespace SafeBit.Api.Migrations
                         {
                             DiseaseID = 3,
                             Category = "Chronic",
-                            CreatedAt = new DateTime(2026, 2, 10, 19, 22, 18, 616, DateTimeKind.Utc).AddTicks(7745),
+                            CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsDeleted = false,
                             Name = "Hypertension"
                         });

@@ -13,6 +13,12 @@ namespace SafeBit.Api.DTOs.Menu
         [JsonPropertyName("ingredients_found")]
         public List<string> IngredientsFound { get; set; } = [];
 
+        [JsonPropertyName("predicted_ingredients")]
+        public List<string> PredictedIngredients { get; set; } = [];
+
+        [JsonPropertyName("ingredient_prediction_used")]
+        public bool IngredientPredictionUsed { get; set; }
+
         [JsonPropertyName("safety_level")]
         public string SafetyLevel { get; set; } = "CAUTION";
 
@@ -30,6 +36,9 @@ namespace SafeBit.Api.DTOs.Menu
 
         [JsonPropertyName("notes")]
         public List<string> Notes { get; set; } = [];
+
+        [JsonPropertyName("short_summary")]
+        public string? ShortSummary { get; set; }
     }
 
     public class AiConflictDto

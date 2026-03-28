@@ -1,3 +1,4 @@
+using SafeBit.Api.DTOs.Chat;
 using SafeBit.Api.DTOs.Menu;
 using System.Net.Http.Headers;
 using System.Text;
@@ -59,6 +60,24 @@ namespace SafeBit.Api.Services
 
             if (result == null)
                 throw new HttpRequestException("AI response could not be parsed.");
+
+            return result;
+        }
+
+        public async Task<AiChatPythonResponseDto> ChatAsync(AiChatRequestDto request)
+        {
+            var response = await _http.PostAsJsonAsync("/chat", request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException(error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<AiChatPythonResponseDto>(_jsonOptions);
+
+            if (result == null)
+                throw new HttpRequestException("AI chat response could not be parsed.");
 
             return result;
         }

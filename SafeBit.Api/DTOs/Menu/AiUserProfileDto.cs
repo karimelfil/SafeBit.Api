@@ -9,5 +9,8 @@ namespace SafeBit.Api.DTOs.Menu
 
         [JsonPropertyName("diseases")]
         public List<string> Diseases { get; set; } = new();
+
+        [JsonPropertyName("is_pregnant")]
+        public bool IsPregnant { get; set; }
     }
 }

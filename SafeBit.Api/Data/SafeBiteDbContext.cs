@@ -10,146 +10,192 @@ namespace SafeBit.Api.Data
         {
         }
 
-
-
-        // Tables Regestrations 
+        // Tables Registrations
         public DbSet<Role> Roles { get; set; }
         public DbSet<Allergy> Allergies { get; set; }
         public DbSet<Disease> Diseases { get; set; }
-
         public DbSet<User> Users { get; set; }
-
         public DbSet<UserAllergy> UserAllergies { get; set; }
         public DbSet<UserDisease> UserDiseases { get; set; }
-
-        public DbSet<MenuUpload> MenuUploads => Set<MenuUpload>();
-        public DbSet<Dish> Dishes => Set<Dish>();
-        public DbSet<Ingredient> Ingredients => Set<Ingredient>();
-        public DbSet<DishIngredient> DishIngredients => Set<DishIngredient>();
-        public DbSet<ScanHistory> ScanHistories => Set<ScanHistory>();
-        public DbSet<FeedbackReport> FeedbackReports => Set<FeedbackReport>();
-
-
+        public DbSet<MenuUpload> MenuUploads { get; set; }
+        public DbSet<Dish> Dishes { get; set; }
+        public DbSet<Ingredient> Ingredients { get; set; }
+        public DbSet<DishIngredient> DishIngredients { get; set; }
+        public DbSet<ScanHistory> ScanHistories { get; set; }
+        public DbSet<FeedbackReport> FeedbackReports { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasDefaultSchema("safebit");
-
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.HasDefaultSchema("safebit");
 
+            // Composite Keys
             modelBuilder.Entity<UserAllergy>()
-     .HasKey(ua => new { ua.UserID, ua.AllergyID });
+                .HasKey(ua => new { ua.UserID, ua.AllergyID });
 
             modelBuilder.Entity<UserDisease>()
                 .HasKey(ud => new { ud.UserID, ud.DiseaseID });
 
-            // Roles
+            modelBuilder.Entity<DishIngredient>()
+                .HasKey(di => new { di.DishID, di.IngredientID });
+
+            // Roles Seed
             modelBuilder.Entity<Role>().HasData(
                 new Role { RoleID = 1, Type = "Admin" },
                 new Role { RoleID = 2, Type = "User" }
             );
 
-            // Allergies
+            // Allergies Seed
             modelBuilder.Entity<Allergy>().HasData(
-                new Allergy { AllergyID = 1, Name = "Peanuts", Category = "Food", CreatedAt = DateTime.UtcNow },
-                new Allergy { AllergyID = 2, Name = "Milk", Category = "Dairy", CreatedAt = DateTime.UtcNow },
-                new Allergy { AllergyID = 3, Name = "Eggs", Category = "Food", CreatedAt = DateTime.UtcNow },
-                new Allergy { AllergyID = 4, Name = "Seafood", Category = "Food", CreatedAt = DateTime.UtcNow }
+                new Allergy
+                {
+                    AllergyID = 1,
+                    Name = "Peanuts",
+                    Category = "Food",
+                    CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new Allergy
+                {
+                    AllergyID = 2,
+                    Name = "Milk",
+                    Category = "Dairy",
+                    CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new Allergy
+                {
+                    AllergyID = 3,
+                    Name = "Eggs",
+                    Category = "Food",
+                    CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new Allergy
+                {
+                    AllergyID = 4,
+                    Name = "Seafood",
+                    Category = "Food",
+                    CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc)
+                }
             );
 
-            // Diseases
+            // Diseases Seed
             modelBuilder.Entity<Disease>().HasData(
-                new Disease { DiseaseID = 1, Name = "Diabetes", Category = "Chronic", CreatedAt = DateTime.UtcNow },
-                new Disease { DiseaseID = 2, Name = "Celiac Disease", Category = "Digestive", CreatedAt = DateTime.UtcNow },
-                new Disease { DiseaseID = 3, Name = "Hypertension", Category = "Chronic", CreatedAt = DateTime.UtcNow }
+                new Disease
+                {
+                    DiseaseID = 1,
+                    Name = "Diabetes",
+                    Category = "Chronic",
+                    CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new Disease
+                {
+                    DiseaseID = 2,
+                    Name = "Celiac Disease",
+                    Category = "Digestive",
+                    CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new Disease
+                {
+                    DiseaseID = 3,
+                    Name = "Hypertension",
+                    Category = "Chronic",
+                    CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc)
+                }
             );
 
             // MenuUpload
-            modelBuilder.Entity<MenuUpload>()
-                .HasKey(m => m.MenuID);
+            modelBuilder.Entity<MenuUpload>(entity =>
+            {
+                entity.ToTable("MenuUploads", "safebit");
 
-            modelBuilder.Entity<MenuUpload>()
-                .Property(m => m.FilePath)
-                .IsRequired()
-                .HasMaxLength(500);
+                entity.HasKey(m => m.MenuID);
 
-            modelBuilder.Entity<MenuUpload>()
-                .HasMany(m => m.Dishes)
-                .WithOne(d => d.MenuUpload)
-                .HasForeignKey(d => d.MenuID)
-                .OnDelete(DeleteBehavior.Cascade);
+                entity.Property(m => m.FilePath)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                entity.HasMany(m => m.Dishes)
+                    .WithOne(d => d.MenuUpload)
+                    .HasForeignKey(d => d.MenuID)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
 
             // Dish
-            modelBuilder.Entity<Dish>()
-                .HasKey(d => d.DishID);
+            modelBuilder.Entity<Dish>(entity =>
+            {
+                entity.ToTable("Dishes", "safebit");
 
-            modelBuilder.Entity<Dish>()
-                .Property(d => d.DishName)
-                .IsRequired()
-                .HasMaxLength(200);
+                entity.HasKey(d => d.DishID);
+
+                entity.Property(d => d.DishName)
+                    .IsRequired()
+                    .HasMaxLength(200);
+            });
 
             // Ingredient
-            modelBuilder.Entity<Ingredient>()
-                .HasKey(i => i.IngredientID);
+            modelBuilder.Entity<Ingredient>(entity =>
+            {
+                entity.ToTable("Ingredients", "safebit");
 
-            modelBuilder.Entity<Ingredient>()
-                .Property(i => i.Name)
-                .IsRequired()
-                .HasMaxLength(150);
+                entity.HasKey(i => i.IngredientID);
 
-            // DishIngredient (composite PK)
-            modelBuilder.Entity<DishIngredient>()
-                .HasKey(di => new { di.DishID, di.IngredientID });
+                entity.Property(i => i.Name)
+                    .IsRequired()
+                    .HasMaxLength(150);
+            });
 
-            modelBuilder.Entity<DishIngredient>()
-                .HasOne(di => di.Dish)
-                .WithMany(d => d.DishIngredients)
-                .HasForeignKey(di => di.DishID);
+            // DishIngredient
+            modelBuilder.Entity<DishIngredient>(entity =>
+            {
+                entity.ToTable("DishIngredients", "safebit");
 
-            modelBuilder.Entity<DishIngredient>()
-                .HasOne(di => di.Ingredient)
-                .WithMany(i => i.DishIngredients)
-                .HasForeignKey(di => di.IngredientID);
+                entity.HasKey(di => new { di.DishID, di.IngredientID });
+
+                entity.HasOne(di => di.Dish)
+                    .WithMany(d => d.DishIngredients)
+                    .HasForeignKey(di => di.DishID)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(di => di.Ingredient)
+                    .WithMany(i => i.DishIngredients)
+                    .HasForeignKey(di => di.IngredientID)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
 
             // ScanHistory
-            modelBuilder.Entity<ScanHistory>()
-                .HasKey(s => s.ScanID);
+            modelBuilder.Entity<ScanHistory>(entity =>
+            {
+                entity.ToTable("ScanHistories", "safebit");
 
-            modelBuilder.Entity<ScanHistory>()
-                .HasOne(s => s.MenuUpload)
-                .WithMany(m => m.ScanHistories)
-                .HasForeignKey(s => s.MenuID)
-                .OnDelete(DeleteBehavior.Restrict);
+                entity.HasKey(s => s.ScanID);
+
+                entity.HasOne(s => s.MenuUpload)
+                    .WithMany(m => m.ScanHistories)
+                    .HasForeignKey(s => s.MenuID)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
             // FeedbackReport
-            modelBuilder.Entity<FeedbackReport>()
-                .HasKey(f => f.ReportID);
+            modelBuilder.Entity<FeedbackReport>(entity =>
+            {
+                entity.ToTable("FeedbackReports", "safebit");
 
-            modelBuilder.Entity<FeedbackReport>()
-                .Property(f => f.Message)
-                .IsRequired()
-                .HasMaxLength(1000);
+                entity.HasKey(f => f.ReportID);
 
-            modelBuilder.Entity<FeedbackReport>()
-                .Property(f => f.Status)
-                .IsRequired()
-                .HasMaxLength(50);
+                entity.Property(f => f.Message)
+                    .IsRequired()
+                    .HasMaxLength(1000);
 
-            modelBuilder.Entity<FeedbackReport>()
-                .HasOne(f => f.Dish)
-                .WithMany(d => d.FeedbackReports)
-                .HasForeignKey(f => f.DishID)
-                .OnDelete(DeleteBehavior.Restrict);
+                entity.Property(f => f.Status)
+                    .IsRequired()
+                    .HasMaxLength(50);
 
-
-
+                entity.HasOne(f => f.Dish)
+                    .WithMany(d => d.FeedbackReports)
+                    .HasForeignKey(f => f.DishID)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
         }
-
-
-
-
-
     }
 }
