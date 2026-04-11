@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 
 namespace SafeBit.Api.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "User")]
     [ApiController]
     [Route("api/menu")]
     public class MenuController : ControllerBase
@@ -36,7 +36,7 @@ namespace SafeBit.Api.Controllers
         {
 
             if (request.File == null || request.File.Length == 0)
-                return BadRequest("Menu image is required.");
+                return BadRequest("Menu is required.");
 
 
             if (string.IsNullOrWhiteSpace(request.RestaurantName))
@@ -133,6 +133,8 @@ namespace SafeBit.Api.Controllers
 
         }
 
+
+        // Get analysis result for a specific menu
         private static void NormalizeAiResult(AiAnalyzeMenuResponse aiResult, AiUserProfileDto profile)
         {
             foreach (var dish in aiResult.Dishes)
@@ -143,6 +145,8 @@ namespace SafeBit.Api.Controllers
             aiResult.Summary = BuildSummary(aiResult.Dishes);
         }
 
+
+        // Adjust dish safety based on user profile and ingredients
         private static void NormalizeDish(AiDishDto dish, AiUserProfileDto profile)
         {
             var ingredients = dish.IngredientsFound
@@ -167,6 +171,8 @@ namespace SafeBit.Api.Controllers
             }
         }
 
+
+        // Build a summary of the menu analysis results
         private static AiMenuSummaryDto BuildSummary(IEnumerable<AiDishDto> dishes)
         {
             var safeToOrder = dishes
@@ -204,6 +210,8 @@ namespace SafeBit.Api.Controllers
             };
         }
 
+
+        // Determine if user profile indicates a need for salt caution
         private static bool UserNeedsSaltCaution(AiUserProfileDto profile)
         {
             IEnumerable<string> indicators = profile.Allergies.Concat(profile.Diseases);
@@ -218,11 +226,17 @@ namespace SafeBit.Api.Controllers
             });
         }
 
+
+        // Check if an ingredient contains salt markers
         private static bool ContainsSaltMarker(string ingredient)
         {
             var normalized = ingredient.Trim().ToLowerInvariant();
             return normalized.Contains("salt") || normalized.Contains("sodium");
         }
+        
+
+
+        // Helper methods to check safety levels
 
         private static bool IsSafe(string? level) =>
             string.Equals(level, "SAFE", StringComparison.OrdinalIgnoreCase);

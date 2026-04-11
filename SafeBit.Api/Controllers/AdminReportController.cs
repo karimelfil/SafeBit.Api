@@ -25,12 +25,12 @@ namespace SafeBit.Api.Controllers
             _context = context;
         }
 
-        //this endpoint generates various analytics reports based on the specified type and date range
+        // Generate analytics report based on the specified type and date range
         [HttpPost("generate-analytics-report")]
         public async Task<IActionResult> GenerateAnalyticsReport(GenerateReportRequestDto request)
         {
             DateTime fromDate;
-            // Determine the starting date based on the requested date range
+            //Detrermine the date range 
             switch (request.DateRange)
             {
                 case "Last7Days":
@@ -60,7 +60,7 @@ namespace SafeBit.Api.Controllers
                 GeneratedAt = DateTime.UtcNow
             };
 
-            //user demographics report groups
+            //user demographics 
             if (request.ReportType == "UserDemographics")
             {
                 var users = await _context.Users
@@ -103,7 +103,7 @@ namespace SafeBit.Api.Controllers
             }
 
 
-            //allergy statistics report groups
+            //allergy statistics 
             else if (request.ReportType == "AllergyStatistics")
             {
                 var allergyNames = await _context.UserAllergies
@@ -131,7 +131,7 @@ namespace SafeBit.Api.Controllers
             }
 
 
-            //disease statistics report groups
+            //disease statistics 
             else if (request.ReportType == "DiseaseStatistics")
             {
                 var diseaseNames = await _context.UserDiseases
@@ -159,7 +159,7 @@ namespace SafeBit.Api.Controllers
             }
 
 
-            //most common allergens in dishes report groups
+            //most common allergens in dishes 
             else if (request.ReportType == "MostCommonAllergensInDishes")
             {
                 var knownAllergens = (await _context.Allergies
@@ -197,7 +197,7 @@ namespace SafeBit.Api.Controllers
             }
 
 
-            //restaurant safety ratios report groups
+            //restaurant safety ratios 
             else if (request.ReportType == "RestaurantSafetyRatios")
             {
                 var menus = await _context.MenuUploads
@@ -229,7 +229,7 @@ namespace SafeBit.Api.Controllers
                     .ToList();
             }
 
-            //app usage analytics report groups
+            //app usage analytics
             else if (request.ReportType == "AppUsageAnalytics")
             {
                 var scans = await _context.ScanHistories
@@ -253,7 +253,7 @@ namespace SafeBit.Api.Controllers
             }
 
 
-            //scan activity trends report groups
+            //scan activity trends 
             else if (request.ReportType == "ScanActivityTrends")
             {
                 var scans = await _context.ScanHistories
@@ -406,6 +406,8 @@ namespace SafeBit.Api.Controllers
             return BadRequest("Invalid export format. Supported formats are CSV, Excel, and PDF.");
         }
 
+
+        // Helper method to style PDF table cells
         private static IContainer CellStyle(IContainer container)
         {
             return container

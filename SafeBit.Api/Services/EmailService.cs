@@ -12,6 +12,7 @@ namespace SafeBit.Api.Services
             _configuration = configuration;
         }
 
+        // Sends an email 
         public async Task SendAsync(string to, string subject, string body)
         {
             var settings = _configuration.GetSection("EmailSettings");
@@ -22,6 +23,7 @@ namespace SafeBit.Api.Services
                 senderName
             );
 
+            // Configure the SMTP client
             var client = new SmtpClient(settings["Host"])
             {
                 Port = int.Parse(settings["Port"]!),
@@ -32,6 +34,8 @@ namespace SafeBit.Api.Services
                 EnableSsl = true
             };
 
+
+            // Create the email message
             var message = new MailMessage
             {
                 From = new MailAddress(
@@ -47,6 +51,7 @@ namespace SafeBit.Api.Services
             await client.SendMailAsync(message);
         }
 
+        // Builds a branded HTML email body with the provided content
         private static string BuildBrandedBody(
             string subject,
             string contentHtml,

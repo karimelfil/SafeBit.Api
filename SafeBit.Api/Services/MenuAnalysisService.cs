@@ -17,7 +17,7 @@ using System.Text.Json;
             _env = env;
         }
 
-        // Saves the uploaded menu and AI analysis results to the database, returning the MenuID.
+        // Saves the uploaded menu and AI analysis results to the database
         public async Task<int> CreateMenuAndSaveResultAsync(
             int userId,
             string restaurantName,
@@ -41,7 +41,7 @@ using System.Text.Json;
 
             var relativePath = $"/uploads/menus/{fileName}";
 
-
+            //Save menu info to DB
             var menu = new MenuUpload
             {
                 UserID = userId,
@@ -53,7 +53,7 @@ using System.Text.Json;
             _db.MenuUploads.Add(menu);
             await _db.SaveChangesAsync();
 
-
+            //Save dishes, ingredients, and their relationships to DB
             foreach (var d in aiResult.Dishes)
             {
                 if (string.IsNullOrWhiteSpace(d.DishName))
@@ -108,6 +108,7 @@ using System.Text.Json;
                 }
             }
 
+        // Save the AI analysis summary to the scan history
         var aiResultJson = JsonSerializer.Serialize(aiResult, _jsonOptions);
 
         _db.ScanHistories.Add(new ScanHistory

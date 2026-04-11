@@ -46,63 +46,6 @@ namespace SafeBit.Api.Data
                 new Role { RoleID = 2, Type = "User" }
             );
 
-            // Allergies Seed
-            modelBuilder.Entity<Allergy>().HasData(
-                new Allergy
-                {
-                    AllergyID = 1,
-                    Name = "Peanuts",
-                    Category = "Food",
-                    CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc)
-                },
-                new Allergy
-                {
-                    AllergyID = 2,
-                    Name = "Milk",
-                    Category = "Dairy",
-                    CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc)
-                },
-                new Allergy
-                {
-                    AllergyID = 3,
-                    Name = "Eggs",
-                    Category = "Food",
-                    CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc)
-                },
-                new Allergy
-                {
-                    AllergyID = 4,
-                    Name = "Seafood",
-                    Category = "Food",
-                    CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc)
-                }
-            );
-
-            // Diseases Seed
-            modelBuilder.Entity<Disease>().HasData(
-                new Disease
-                {
-                    DiseaseID = 1,
-                    Name = "Diabetes",
-                    Category = "Chronic",
-                    CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc)
-                },
-                new Disease
-                {
-                    DiseaseID = 2,
-                    Name = "Celiac Disease",
-                    Category = "Digestive",
-                    CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc)
-                },
-                new Disease
-                {
-                    DiseaseID = 3,
-                    Name = "Hypertension",
-                    Category = "Chronic",
-                    CreatedAt = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc)
-                }
-            );
-
             // MenuUpload
             modelBuilder.Entity<MenuUpload>(entity =>
             {

@@ -18,7 +18,7 @@ namespace SafeBit.Api.Controllers
         {
             _context = context;
         }
-        // Provides anonymized health statistics and insights for admin dashboard analytics
+        // Anonymized health statistics 
         [HttpGet]
         public async Task<ActionResult> GetAnonymizedHealthStatistics()
         {
@@ -165,7 +165,8 @@ namespace SafeBit.Api.Controllers
                     Diseases = diseasesMonthly
                 });
             }
-
+            
+            // Generate key insights based on the collected data
             var keyInsights = new List<KeyInsightDto>
             {
                 new KeyInsightDto

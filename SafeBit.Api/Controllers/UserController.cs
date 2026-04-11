@@ -24,7 +24,7 @@ namespace SafeBit.Api.Controllers
 			_emailService = emailService;
 		}
 
-
+        //Get User Details based on the userId in the route
         [Authorize(Roles = "User")]
         [HttpGet("profile/{userId:int}")]
 		public async Task<IActionResult> GetUserDetails(int userId)
@@ -62,7 +62,7 @@ namespace SafeBit.Api.Controllers
 			return Ok(user);
 		}
 
-
+        //Update User Personal Information based on the userId in the route and the data in the request body
         [Authorize(Roles = "User")]
         [HttpPatch("profile/{userId:int}")]
 		public async Task<IActionResult> UpdatePersonalInfo(
@@ -119,6 +119,7 @@ namespace SafeBit.Api.Controllers
 			return Ok("Personal information updated successfully.");
 		}
 
+        //Get User Health Information based on the userId in the route
         [Authorize(Roles = "User")]
         [HttpGet("{userId:int}/health")]
 		public async Task<IActionResult> GetUserHealthInfo(int userId)
@@ -179,6 +180,7 @@ namespace SafeBit.Api.Controllers
 			return Ok(result);
 		}
 
+        //Get All Allergies 
 		[HttpGet("allergies")]
 		public async Task<IActionResult> GetAllAllergies()
 		{
@@ -196,6 +198,7 @@ namespace SafeBit.Api.Controllers
 			return Ok(allergies);
 		}
 
+        //Get All Diseases
 		[HttpGet("diseases")]
 		public async Task<IActionResult> GetAllDiseases()
 		{
@@ -212,6 +215,9 @@ namespace SafeBit.Api.Controllers
 
 			return Ok(diseases);
 		}
+
+
+        //Update User Health Information based on the userId in the route and the data in the request body
         [Authorize(Roles = "User")]
         [HttpPut("{userId:int}/health")]
         public async Task<IActionResult> UpdateUserHealthProfile(
@@ -233,8 +239,8 @@ namespace SafeBit.Api.Controllers
             if (!userExists)
                 return NotFound("User not found.");
 
-            var incomingAllergyIds = (dto.AllergyIds ?? new List<int>()).Distinct().ToList();
-            var incomingDiseaseIds = (dto.DiseaseIds ?? new List<int>()).Distinct().ToList();
+            var incomingAllergyIds = (dto.AllergyIds ?? new List<int>()).Distinct().ToList();//To avoid duplicates and ensure we have a list to work with
+            var incomingDiseaseIds = (dto.DiseaseIds ?? new List<int>()).Distinct().ToList();//To avoid duplicates and ensure we have a list to work with
 
             using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -322,6 +328,7 @@ namespace SafeBit.Api.Controllers
             }
         }
 
+        //Add Allergies to User Health Profile based on the userId in the route and the allergyIds in the request body
         [Authorize(Roles = "User")]
         [HttpPost("{userId:int}/health/allergies")]
         public async Task<IActionResult> AddAllergies(int userId, [FromBody] AddUserAllergiesDto dto)
@@ -367,6 +374,8 @@ namespace SafeBit.Api.Controllers
             return Ok("Allergies added.");
         }
 
+
+        //Delete Allergy from User Health Profile based on the userId and allergyId in the route
         [Authorize(Roles = "User")]
         [HttpDelete("{userId:int}/health/allergies/{allergyId:int}")]
         public async Task<IActionResult> DeleteAllergy(int userId, int allergyId)
@@ -387,6 +396,7 @@ namespace SafeBit.Api.Controllers
             return Ok("Allergy deleted.");
         }
 
+        //Add Diseases to User Health Profile based on the userId in the route and the diseaseIds in the request body
         [Authorize(Roles = "User")]
         [HttpPost("{userId:int}/health/diseases")]
         public async Task<IActionResult> AddDiseases(int userId, [FromBody] AddUserDiseasesDto dto)
@@ -431,6 +441,8 @@ namespace SafeBit.Api.Controllers
             return Ok("Diseases added.");
         }
 
+
+        //Delete Disease from User Health Profile based on the userId and diseaseId in the route
         [Authorize(Roles = "User")]
         [HttpDelete("{userId:int}/health/diseases/{diseaseId:int}")]
         public async Task<IActionResult> DeleteDisease(int userId, int diseaseId)
@@ -452,7 +464,7 @@ namespace SafeBit.Api.Controllers
         }
 
 
-
+        //Get User Health Summary based on the userId in the route only names of allergies and diseases
         [Authorize(Roles = "User")]
         [HttpGet("{userId:int}/health/summary")]
         public async Task<IActionResult> GetUserHealthSummary(int userId)
@@ -483,7 +495,6 @@ namespace SafeBit.Api.Controllers
             .Distinct()
             .OrderBy(x => x)
             .ToListAsync();
-
             var diseases = await (
                 from ud in _context.UserDiseases
                 join d in _context.Diseases on ud.DiseaseID equals d.DiseaseID

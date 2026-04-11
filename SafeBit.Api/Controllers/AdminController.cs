@@ -22,7 +22,7 @@ namespace SafeBit.Api.Controllers
             _emailService = emailService;
         }
 
-        // Retrieves all non-deleted users with role type "User" and orders them by registration date.
+        // List all users of type User 
         [HttpGet("get-all-users")]
         public async Task<IActionResult> GetAllUsers()
         {
@@ -54,7 +54,7 @@ namespace SafeBit.Api.Controllers
         }
 
 
-        // Retrieves detailed information about a specific user by their ID.
+        // Get detailed information about a specific user by their ID
         [HttpGet("users/{userId:int}")]
         public async Task<IActionResult> GetUserDetails(int userId)
         {
@@ -92,7 +92,7 @@ namespace SafeBit.Api.Controllers
         }
 
 
-        // Updates user information based on provided data.
+        // Updates user information 
         [HttpPut("users/{userId:int}")]
         public async Task<IActionResult> UpdateUser(
  int userId,
@@ -151,7 +151,7 @@ namespace SafeBit.Api.Controllers
             return Ok("User information updated successfully.");
         }
 
-        // Suspends a user account by setting IsSuspended to true and updating the status.
+        // Suspends a user account soft delet
         [HttpPost("users/{userId:int}/suspend")]
         public async Task<IActionResult> SuspendUser(int userId)
         {
@@ -199,7 +199,7 @@ namespace SafeBit.Api.Controllers
             return Ok("User account suspended successfully.");
         }
 
-        // Reactivates a suspended user account by setting IsSuspended to false and updating the status.
+        // Reactivates a suspended user account 
         [HttpPost("users/{userId:int}/reactivate")]
         public async Task<IActionResult> ReactivateUser(int userId)
         {
@@ -246,7 +246,7 @@ namespace SafeBit.Api.Controllers
         }
 
 
-        // Retrieves all allergens from the database.
+        // Retrieves all allergens from the database
         [HttpGet("allergens")]
         public async Task<IActionResult> GetAllAllergens()
         {
@@ -265,7 +265,7 @@ namespace SafeBit.Api.Controllers
             return Ok(new { allergens });
         }
 
-        // Retrieves all diseases from the database.
+        // Retrieves all diseases from the database
         [HttpGet("diseases")]
         public async Task<IActionResult> GetAllDiseases()
         {
@@ -285,7 +285,7 @@ namespace SafeBit.Api.Controllers
             return Ok(new { diseases });
         }
 
-        // Creates a new allergen in the database after validating the input and checking for duplicates.
+        // Creates a new allergen 
         [HttpPost("allergens")]
         public async Task<IActionResult> CreateAllergen([FromBody] CreateAllergenDto request)
         {
@@ -321,7 +321,7 @@ namespace SafeBit.Api.Controllers
             });
         }
 
-        // Creates a new disease in the database after validating the input and checking for duplicates.
+        // Creates a new disease 
         [HttpPost("diseases")]
         public async Task<IActionResult> CreateDiseases([FromBody] CreateDiseasesDto request)
         {
@@ -358,7 +358,7 @@ namespace SafeBit.Api.Controllers
         }
 
 
-        // Updates an existing allergen's details after validating input and checking for duplicates.
+        // Updates an existing allergen
         [HttpPut("allergens/{id}")]
         public async Task<IActionResult> UpdateAllergen(int id,[FromBody] UpdateAllergenDto request)
         {
@@ -396,7 +396,7 @@ namespace SafeBit.Api.Controllers
 
 
 
-        // Updates an existing disease's details after validating input and checking for duplicates.
+        // Updates an existing disease
         [HttpPut("diseases/{id}")]
         public async Task<IActionResult> UpdateDiseases(int id, [FromBody] UpdateDiseasesDto request)
         {
@@ -432,7 +432,7 @@ namespace SafeBit.Api.Controllers
         }
 
 
-        // Soft deletes an allergen by setting IsDeleted to true and updating DeletedAt timestamp.
+        // Soft deletes an allergen 
         [HttpDelete("allergens/{id}")]
         public async Task<IActionResult> DeleteAllergen(int id)
         {
@@ -453,7 +453,7 @@ namespace SafeBit.Api.Controllers
             });
         }
 
-        // Soft deletes a disease by setting IsDeleted to true and updating DeletedAt timestamp.
+        // Soft deletes a disease 
         [HttpDelete("diseases/{id}")]
         public async Task<IActionResult> DeleteDiseases(int id)
         {

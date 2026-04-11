@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace SafeBit.Api.Services
 {
-    // Communicates with the AI agent to analyze menu images + user profiles.
+    
     public class AiAgentService
     {
         private readonly HttpClient _http;
@@ -29,6 +29,8 @@ namespace SafeBit.Api.Services
             _http.Timeout = TimeSpan.FromSeconds(60);
         }
 
+
+        // Analyzes a menu image and returns structured data
         public async Task<AiAnalyzeMenuResponse> AnalyzeMenuAsync(
             IFormFile menuImage,
             AiUserProfileDto profile)
@@ -47,7 +49,7 @@ namespace SafeBit.Api.Services
                 new StringContent(profileJson, Encoding.UTF8, "application/json"),
                 "user_profile_json");
 
-            var response = await _http.PostAsync("/analyze-menu", form);
+            var response = await _http.PostAsync("/analyze-menu", form); // call the AI agent endpoint
 
             if (!response.IsSuccessStatusCode)
             {

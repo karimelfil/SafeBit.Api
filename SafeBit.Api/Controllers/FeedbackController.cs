@@ -5,23 +5,27 @@ using SafeBit.Api.Data;
 using SafeBit.Api.DTOs.Feedback;
 using SafeBit.Api.Model;
 using SafeBit.Api.Model.Enums;
+using SafeBit.Api.Services;
 using System.Security.Claims;
 
 namespace SafeBit.Api.Controllers
 {
-    [Authorize]
+
     [ApiController]
     [Route("api/feedback")]
     public class FeedbackController : ControllerBase
     {
         private readonly SafeBiteDbContext _db;
+        private readonly EmailService _emailService;
 
-        public FeedbackController(SafeBiteDbContext db)
+        public FeedbackController(SafeBiteDbContext db, EmailService emailService)
         {
             _db = db;
+            _emailService = emailService;
         }
 
         // Submit feedback report for incorrect dish detection
+        [Authorize(Roles = "User")]
         [HttpPost]
         public async Task<IActionResult> SubmitFeedback(
             [FromBody] SubmitFeedbackRequest request)
@@ -36,7 +40,7 @@ namespace SafeBit.Api.Controllers
                 User.FindFirst(ClaimTypes.NameIdentifier)!.Value
             );
 
-            // Ensure dish exists and belongs to a menu scanned by this user
+            
             var dish = await _db.Dishes
                 .Include(d => d.MenuUpload)
                 .FirstOrDefaultAsync(d =>
@@ -92,6 +96,7 @@ namespace SafeBit.Api.Controllers
         private static string FormatDishCode(int dishId) => $"DISH{dishId:D3}";
         private static string FormatUserCode(int userId) => $"USR{userId:D3}";
 
+        // Convert enum status to UI-friendly string
         private static string StatusToUiString(FeedbackStatus status)
         {
             return status switch
@@ -103,6 +108,8 @@ namespace SafeBit.Api.Controllers
             };
         }
 
+
+        //Get all feedback reports for admin review
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<ActionResult> GetAllUserFeedbackReports()
@@ -129,6 +136,8 @@ namespace SafeBit.Api.Controllers
             return Ok(result);
         }
 
+
+        // Get detailed feedback report 
         [Authorize(Roles = "Admin")]
         [HttpGet("{reportId:int}")]
         public async Task<ActionResult> GetFeedbackReportDetails(int reportId)
@@ -161,13 +170,19 @@ namespace SafeBit.Api.Controllers
             return Ok(dto);
         }
 
+
+
+        
         [Authorize(Roles = "Admin")]
         [HttpPut("{reportId:int}/status")]
+        // Update feedback report status 
         public async Task<ActionResult> UpdateFeedbackReportStatus(
             int reportId,
             [FromBody] UpdateFeedbackStatusRequestDto request)
         {
             var report = await _db.FeedbackReports
+                .Include(r => r.User)
+                .Include(r => r.Dish)
                 .Where(r => !r.IsDeleted && r.ReportID == reportId)
                 .FirstOrDefaultAsync();
 
@@ -179,6 +194,23 @@ namespace SafeBit.Api.Controllers
             report.UpdatedBy = request.UpdatedBy;
 
             await _db.SaveChangesAsync();
+
+            if (report.Status == FeedbackStatus.Reviewed ||
+                report.Status == FeedbackStatus.Resolved)
+            {
+                var statusLabel = StatusToUiString(report.Status);
+                var statusDisplay = char.ToUpper(statusLabel[0]) + statusLabel[1..];
+
+                await _emailService.SendAsync(
+                    report.User.Email,
+                    $"Your SafeBite feedback was {statusDisplay}",
+                    $@"
+        <p>Hello {report.User.FirstName ?? "User"},</p>
+        <p>Your feedback report for <b>{report.Dish.DishName}</b> has been marked as <b>{statusDisplay}</b>.</p>
+        <p>Thank you for helping us improve SafeBite and keep menu analysis accurate.</p>
+        "
+                );
+            }
 
             return Ok(new
             {

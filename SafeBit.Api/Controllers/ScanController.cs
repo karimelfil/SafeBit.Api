@@ -8,12 +8,14 @@ using System.Text.Json;
 
 namespace SafeBit.Api.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "User")]
     [ApiController]
     [Route("api/scan")]
     public class ScanController : ControllerBase
     {
         private readonly SafeBiteDbContext _db;
+
+        
         private readonly JsonSerializerOptions _jsonOptions = new()
         {
             PropertyNameCaseInsensitive = true
@@ -24,6 +26,8 @@ namespace SafeBit.Api.Controllers
             _db = db;
         }
 
+
+        
         [HttpGet("history")]
         public async Task<IActionResult> GetScanHistory()
         {
@@ -77,6 +81,8 @@ namespace SafeBit.Api.Controllers
             return Ok(response);
         }
 
+
+        // Detailed scan results  
         [HttpGet("{scanId}")]
         public async Task<IActionResult> GetMenuDetails(int scanId)
         {
@@ -154,6 +160,8 @@ namespace SafeBit.Api.Controllers
             });
         }
 
+
+        // Helper method to safely deserialize AI results
         private AiAnalyzeMenuResponse? TryDeserializeAiResult(string? json)
         {
             if (string.IsNullOrWhiteSpace(json))
@@ -169,6 +177,7 @@ namespace SafeBit.Api.Controllers
             }
         }
 
+        // Helper method to determine safety level
         private static bool IsSafetyLevel(string? level, string expectedLevel) =>
             string.Equals(level, expectedLevel, StringComparison.OrdinalIgnoreCase);
     }

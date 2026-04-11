@@ -13,10 +13,10 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+// Set the EPPlus license 
 ExcelPackage.License.SetNonCommercialOrganization("SafeBit");
 
-
+// Configure Entity Framework with PostgreSQL
 builder.Services.AddDbContext<SafeBiteDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -27,7 +27,7 @@ builder.Services.AddDbContext<SafeBiteDbContext>(options =>
     )
 );
 
-
+// Configure CORS to allow requests from the frontend
 const string CorsPolicy = "_allowFrontend";
 builder.Services.AddCors(options =>
 {
@@ -45,7 +45,7 @@ builder.Services.AddCors(options =>
     );
 });
 
-
+// Configure JWT authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
 
@@ -69,7 +69,7 @@ builder.Services
             ValidateAudience = true,
             ValidAudience = jwtSettings["Audience"],
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero, // tokens expire exactly at expiration
+            ClockSkew = TimeSpan.Zero, 
             RoleClaimType = ClaimTypes.Role,
             NameClaimType = ClaimTypes.NameIdentifier
         };
@@ -95,7 +95,6 @@ builder.Services
 
                 var user = await db.Users.FindAsync(int.Parse(userId));
 
-                // Token revoked or user deleted/suspended
                 if (user == null || user.ActiveJti != jti || user.IsDeleted || user.IsSuspended)
                 {
                     context.Fail("Token revoked");
@@ -112,6 +111,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<MenuAnalysisService>();
+builder.Services.AddScoped<MasterDataSeedService>();
 builder.Services.AddHttpClient<AiAgentService>();
 builder.Services.AddControllers();
 
@@ -146,6 +146,16 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<SafeBiteDbContext>();
+    await db.Database.MigrateAsync();
+
+    var masterDataSeeder = scope.ServiceProvider.GetRequiredService<MasterDataSeedService>();
+    await masterDataSeeder.SeedAsync();
+}
+
 
 var emailAssetsPath = Path.Combine(builder.Environment.ContentRootPath, "Assets", "Email");
 Directory.CreateDirectory(emailAssetsPath);

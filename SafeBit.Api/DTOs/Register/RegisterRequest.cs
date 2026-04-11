@@ -30,10 +30,8 @@ namespace SafeBit.Api.DTOs.Register
         [EnumDataType(typeof(Gender), ErrorMessage = "Invalid gender value.")]
         public Gender Gender { get; set; }
 
-        // Only if Female
         public bool IsPregnant { get; set; }
 
-        // ===== Security =====
 
         [Required(ErrorMessage = "Password is required.")]
         [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
@@ -43,8 +41,6 @@ namespace SafeBit.Api.DTOs.Register
         [Required(ErrorMessage = "Confirm password is required.")]
         [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
         public string ConfirmPassword { get; set; } = string.Empty;
-
-        // ===== Health Information =====
 
         public List<int> AllergyIds { get; set; } = new();
         public List<int> DiseaseIds { get; set; } = new();

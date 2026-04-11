@@ -1,0 +1,141 @@
+DiseaseID,Name,Category,CreatedAt
+1,Type 1 Diabetes,Metabolic,2026-04-11T00:00:00Z
+2,Type 2 Diabetes,Metabolic,2026-04-11T00:00:00Z
+3,Prediabetes,Metabolic,2026-04-11T00:00:00Z
+4,Gestational Diabetes,Pregnancy,2026-04-11T00:00:00Z
+5,Reactive Hypoglycemia,Metabolic,2026-04-11T00:00:00Z
+6,Obesity,Chronic,2026-04-11T00:00:00Z
+7,Overweight,Chronic,2026-04-11T00:00:00Z
+8,Metabolic Syndrome,Metabolic,2026-04-11T00:00:00Z
+9,Hypercholesterolemia,Cardiovascular,2026-04-11T00:00:00Z
+10,Hypertriglyceridemia,Cardiovascular,2026-04-11T00:00:00Z
+11,Hypertension,Cardiovascular,2026-04-11T00:00:00Z
+12,Hypotension,Cardiovascular,2026-04-11T00:00:00Z
+13,Coronary Artery Disease,Cardiovascular,2026-04-11T00:00:00Z
+14,Heart Failure,Cardiovascular,2026-04-11T00:00:00Z
+15,Peripheral Artery Disease,Cardiovascular,2026-04-11T00:00:00Z
+16,Atherosclerosis,Cardiovascular,2026-04-11T00:00:00Z
+17,Cardiac Arrhythmia,Cardiovascular,2026-04-11T00:00:00Z
+18,Atrial Fibrillation,Cardiovascular,2026-04-11T00:00:00Z
+19,Stroke,Neurological,2026-04-11T00:00:00Z
+20,Transient Ischemic Attack,Neurological,2026-04-11T00:00:00Z
+21,Chronic Kidney Disease,Renal,2026-04-11T00:00:00Z
+22,End-Stage Renal Disease,Renal,2026-04-11T00:00:00Z
+23,Acute Kidney Injury,Renal,2026-04-11T00:00:00Z
+24,Nephrotic Syndrome,Renal,2026-04-11T00:00:00Z
+25,Nephrolithiasis,Renal,2026-04-11T00:00:00Z
+26,Chronic Liver Disease,Hepatic,2026-04-11T00:00:00Z
+27,Cirrhosis,Hepatic,2026-04-11T00:00:00Z
+28,Nonalcoholic Fatty Liver Disease,Hepatic,2026-04-11T00:00:00Z
+29,Metabolic Dysfunction-Associated Steatotic Liver Disease,Hepatic,2026-04-11T00:00:00Z
+30,Alcohol-Related Liver Disease,Hepatic,2026-04-11T00:00:00Z
+31,Hepatitis B,Hepatic,2026-04-11T00:00:00Z
+32,Hepatitis C,Hepatic,2026-04-11T00:00:00Z
+33,Hepatic Encephalopathy,Hepatic,2026-04-11T00:00:00Z
+34,Pancreatitis,Digestive,2026-04-11T00:00:00Z
+35,Chronic Pancreatitis,Digestive,2026-04-11T00:00:00Z
+36,Exocrine Pancreatic Insufficiency,Digestive,2026-04-11T00:00:00Z
+37,Celiac Disease,Autoimmune,2026-04-11T00:00:00Z
+38,Non-Celiac Gluten Sensitivity,Digestive,2026-04-11T00:00:00Z
+39,Irritable Bowel Syndrome,Digestive,2026-04-11T00:00:00Z
+40,Crohn's Disease,Digestive,2026-04-11T00:00:00Z
+41,Ulcerative Colitis,Digestive,2026-04-11T00:00:00Z
+42,Gastroesophageal Reflux Disease,Digestive,2026-04-11T00:00:00Z
+43,Peptic Ulcer Disease,Digestive,2026-04-11T00:00:00Z
+44,Chronic Gastritis,Digestive,2026-04-11T00:00:00Z
+45,Dyspepsia,Digestive,2026-04-11T00:00:00Z
+46,Lactose Intolerance,Digestive,2026-04-11T00:00:00Z
+47,Fructose Malabsorption,Digestive,2026-04-11T00:00:00Z
+48,Sucrase-Isomaltase Deficiency,Digestive,2026-04-11T00:00:00Z
+49,Histamine Intolerance,Digestive,2026-04-11T00:00:00Z
+50,Small Intestinal Bacterial Overgrowth,Digestive,2026-04-11T00:00:00Z
+51,Diverticular Disease,Digestive,2026-04-11T00:00:00Z
+52,Chronic Constipation,Digestive,2026-04-11T00:00:00Z
+53,Chronic Diarrhea,Digestive,2026-04-11T00:00:00Z
+54,Dumping Syndrome,Digestive,2026-04-11T00:00:00Z
+55,Short Bowel Syndrome,Digestive,2026-04-11T00:00:00Z
+56,Dysphagia,Digestive,2026-04-11T00:00:00Z
+57,Gastroparesis,Digestive,2026-04-11T00:00:00Z
+58,Cholelithiasis,Digestive,2026-04-11T00:00:00Z
+59,Chronic Cholecystitis,Digestive,2026-04-11T00:00:00Z
+60,Functional Dyspepsia,Digestive,2026-04-11T00:00:00Z
+61,Hemorrhoids,Digestive,2026-04-11T00:00:00Z
+62,Malnutrition,Chronic,2026-04-11T00:00:00Z
+63,Protein-Energy Malnutrition,Chronic,2026-04-11T00:00:00Z
+64,Sarcopenia,Chronic,2026-04-11T00:00:00Z
+65,Cachexia,Chronic,2026-04-11T00:00:00Z
+66,Iron Deficiency Anemia,Chronic,2026-04-11T00:00:00Z
+67,Vitamin B12 Deficiency,Metabolic,2026-04-11T00:00:00Z
+68,Folate Deficiency,Metabolic,2026-04-11T00:00:00Z
+69,Vitamin D Deficiency,Metabolic,2026-04-11T00:00:00Z
+70,Calcium Deficiency,Metabolic,2026-04-11T00:00:00Z
+71,Hypoalbuminemia,Metabolic,2026-04-11T00:00:00Z
+72,Dehydration,Metabolic,2026-04-11T00:00:00Z
+73,Hyponatremia,Metabolic,2026-04-11T00:00:00Z
+74,Hypernatremia,Metabolic,2026-04-11T00:00:00Z
+75,Hypokalemia,Metabolic,2026-04-11T00:00:00Z
+76,Hyperkalemia,Metabolic,2026-04-11T00:00:00Z
+77,Hypocalcemia,Metabolic,2026-04-11T00:00:00Z
+78,Hypercalcemia,Metabolic,2026-04-11T00:00:00Z
+79,Hypomagnesemia,Metabolic,2026-04-11T00:00:00Z
+80,Hyperphosphatemia,Metabolic,2026-04-11T00:00:00Z
+81,Gout,Metabolic,2026-04-11T00:00:00Z
+82,Hyperuricemia,Metabolic,2026-04-11T00:00:00Z
+83,Phenylketonuria,Metabolic,2026-04-11T00:00:00Z
+84,Galactosemia,Metabolic,2026-04-11T00:00:00Z
+85,Maple Syrup Urine Disease,Metabolic,2026-04-11T00:00:00Z
+86,Hereditary Fructose Intolerance,Metabolic,2026-04-11T00:00:00Z
+87,Wilson Disease,Hepatic,2026-04-11T00:00:00Z
+88,Hemochromatosis,Metabolic,2026-04-11T00:00:00Z
+89,Hypothyroidism,Metabolic,2026-04-11T00:00:00Z
+90,Hyperthyroidism,Metabolic,2026-04-11T00:00:00Z
+91,Hashimoto's Thyroiditis,Autoimmune,2026-04-11T00:00:00Z
+92,Graves' Disease,Autoimmune,2026-04-11T00:00:00Z
+93,Polycystic Ovary Syndrome,Metabolic,2026-04-11T00:00:00Z
+94,Endometriosis,Other,2026-04-11T00:00:00Z
+95,Pregnancy,Pregnancy,2026-04-11T00:00:00Z
+96,Preeclampsia,Pregnancy,2026-04-11T00:00:00Z
+97,Gestational Hypertension,Pregnancy,2026-04-11T00:00:00Z
+98,Hyperemesis Gravidarum,Pregnancy,2026-04-11T00:00:00Z
+99,Multiple Gestation,Pregnancy,2026-04-11T00:00:00Z
+100,Food Protein-Induced Enterocolitis Syndrome,Digestive,2026-04-11T00:00:00Z
+101,Eosinophilic Esophagitis,Digestive,2026-04-11T00:00:00Z
+102,Eosinophilic Gastroenteritis,Digestive,2026-04-11T00:00:00Z
+103,Asthma,Chronic,2026-04-11T00:00:00Z
+104,Chronic Obstructive Pulmonary Disease,Chronic,2026-04-11T00:00:00Z
+105,Obstructive Sleep Apnea,Chronic,2026-04-11T00:00:00Z
+106,Osteoporosis,Chronic,2026-04-11T00:00:00Z
+107,Osteopenia,Chronic,2026-04-11T00:00:00Z
+108,Osteoarthritis,Chronic,2026-04-11T00:00:00Z
+109,Rheumatoid Arthritis,Autoimmune,2026-04-11T00:00:00Z
+110,Systemic Lupus Erythematosus,Autoimmune,2026-04-11T00:00:00Z
+111,Psoriasis,Autoimmune,2026-04-11T00:00:00Z
+112,Psoriatic Arthritis,Autoimmune,2026-04-11T00:00:00Z
+113,Multiple Sclerosis,Autoimmune,2026-04-11T00:00:00Z
+114,Sjögren Syndrome,Autoimmune,2026-04-11T00:00:00Z
+115,Scleroderma,Autoimmune,2026-04-11T00:00:00Z
+116,Ankylosing Spondylitis,Autoimmune,2026-04-11T00:00:00Z
+117,Migraine,Neurological,2026-04-11T00:00:00Z
+118,Epilepsy,Neurological,2026-04-11T00:00:00Z
+119,Parkinson's Disease,Neurological,2026-04-11T00:00:00Z
+120,Dementia,Neurological,2026-04-11T00:00:00Z
+121,Alzheimer's Disease,Neurological,2026-04-11T00:00:00Z
+122,Depression,Neurological,2026-04-11T00:00:00Z
+123,Anxiety Disorder,Neurological,2026-04-11T00:00:00Z
+124,Anorexia Nervosa,Other,2026-04-11T00:00:00Z
+125,Bulimia Nervosa,Other,2026-04-11T00:00:00Z
+126,Binge Eating Disorder,Other,2026-04-11T00:00:00Z
+127,Avoidant Restrictive Food Intake Disorder,Other,2026-04-11T00:00:00Z
+128,Cancer,Chronic,2026-04-11T00:00:00Z
+129,Colorectal Cancer,Chronic,2026-04-11T00:00:00Z
+130,Gastric Cancer,Chronic,2026-04-11T00:00:00Z
+131,Pancreatic Cancer,Chronic,2026-04-11T00:00:00Z
+132,Liver Cancer,Chronic,2026-04-11T00:00:00Z
+133,Chronic Venous Insufficiency,Cardiovascular,2026-04-11T00:00:00Z
+134,Edema,Cardiovascular,2026-04-11T00:00:00Z
+135,Lymphedema,Cardiovascular,2026-04-11T00:00:00Z
+136,Hypertensive Heart Disease,Cardiovascular,2026-04-11T00:00:00Z
+137,Dilated Cardiomyopathy,Cardiovascular,2026-04-11T00:00:00Z
+138,Pulmonary Hypertension,Cardiovascular,2026-04-11T00:00:00Z
+139,Chronic Inflammatory Response Syndrome,Other,2026-04-11T00:00:00Z
+140,Frailty Syndrome,Chronic,2026-04-11T00:00:00Z

@@ -18,9 +18,10 @@ namespace SafeBit.Api.Controllers
             _context = context;
         }
 
+        // Helper method to format dish code 
         private static string FormatDishCode(int dishId) => $"DISH{dishId:D3}";
 
-        //to be used in admin dashboard for listing all dishes with basic info
+        //Get all dishes uploaded by users
         [HttpGet]
         public async Task<ActionResult> GetAllDishes()
         {
@@ -46,7 +47,7 @@ namespace SafeBit.Api.Controllers
         }
 
 
-        //to be used in admin dashboard for showing details of a dish including its ingredients
+        //Get ingredients for a specific dish
         [HttpGet("{dishId:int}/ingredients")]
         public async Task<ActionResult> GetDishIngredients(int dishId)
         {

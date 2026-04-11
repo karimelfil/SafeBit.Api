@@ -33,9 +33,8 @@ namespace SafeBite.API.Controllers
             _emailService = emailService;
         }
 
-        // Registers a new user by validating input, ensuring email uniqueness,
-        // creating the user account, and linking selected allergies and diseases
-        // within a single database transaction.
+
+        // Registers a new user with the RegisterRequest dto
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterRequest request)
         {
@@ -43,7 +42,6 @@ namespace SafeBite.API.Controllers
             if (request.Password != request.ConfirmPassword)
                 return BadRequest("Passwords do not match.");
 
-            // Pregnancy rule
             if (request.Gender == Gender.Male && request.IsPregnant)
                 return BadRequest("Male users cannot be pregnant.");
 
@@ -62,7 +60,7 @@ namespace SafeBite.API.Controllers
 
                 var user = new User
                 {
-                    RoleID = 2, // User role
+                    RoleID = 2, // Default to User role
                     FirstName = request.FirstName,
                     LastName = request.LastName,
                     Email = request.Email,
@@ -73,7 +71,7 @@ namespace SafeBite.API.Controllers
                     IsSuspended = false,
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                     RegistrationDate = DateTime.UtcNow,
-                    Status = "Active",
+                    Status = "Active", // Default status
                     CreatedAt = DateTime.UtcNow,
                     IsDeleted = false
                 };
@@ -81,7 +79,7 @@ namespace SafeBite.API.Controllers
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
-                //  Add allergies
+                
                 foreach (var allergyId in request.AllergyIds)
                 {
                     _context.UserAllergies.Add(new UserAllergy
@@ -93,7 +91,7 @@ namespace SafeBite.API.Controllers
                     });
                 }
 
-                //  Add diseases
+                
                 foreach (var diseaseId in request.DiseaseIds)
                 {
                     _context.UserDiseases.Add(new UserDisease
@@ -117,9 +115,8 @@ namespace SafeBite.API.Controllers
             }
         }
 
-        // Authenticates a user, validates credentials, and returns a JWT token on success.
-        // Verifies user credentials, checks account status, and issues a JWT token.
-
+        
+        // Login a user with the LoginRequest dto and return a JWT token 
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequestDto request)
         {
@@ -153,8 +150,8 @@ namespace SafeBite.API.Controllers
             });
         }
 
-        /// Generates a secure password reset token, stores it with an expiration time,
-        /// and sends a password reset link to the user's email if the account exists.
+        
+        // Forgot password genearte a secure token and send reset link via email 
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordDto request)
         {
@@ -164,10 +161,10 @@ namespace SafeBite.API.Controllers
                     !u.IsDeleted);
 
             if (user == null)
-                return Ok("If the email exists, a reset link has been sent.");
+                return Ok("Email does not exist.");
 
-            var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
-            var hashedToken = BCrypt.Net.BCrypt.HashPassword(rawToken);
+            var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));// Generate a secure random token
+            var hashedToken = BCrypt.Net.BCrypt.HashPassword(rawToken);// Hash the token before storing
 
             user.PasswordResetToken = hashedToken;
             user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
@@ -198,8 +195,7 @@ namespace SafeBite.API.Controllers
 
 
 
-        /// Resets a user's password using a valid, unexpired password reset token.
-        /// Contains the reset token, new password, and confirmation password.
+        // Reset password using the token from the forgot password  and update  user password
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword(ResetPasswordDto request)
         {
@@ -234,14 +230,12 @@ namespace SafeBite.API.Controllers
 
 
 
-        /// The user is identified from the JWT token (NameIdentifier claim).
-        /// Once deactivated, the account is marked as suspended and cannot be used to log in.
-        /// A confirmation email is sent after successful deactivation.
+        // Soft deactivate the user acccount 
         [Authorize(Roles = "User")]
         [HttpPost("deactivate-account")]
         public async Task<IActionResult> DeactivateAccount()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);// Get the user ID from the JWT claims (logged-in user)
 
             if (userIdClaim == null)
                 return Unauthorized("Invalid token.");
@@ -257,8 +251,8 @@ namespace SafeBite.API.Controllers
             if (user == null)
                 return BadRequest("User not found or already deactivated.");
 
-            user.IsSuspended = true;
-            user.Status = "Deactivated";
+            user.IsSuspended = true;// Mark the account as suspended
+            user.Status = "Deactivated";// Update the status to "Deactivated"
             user.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -277,14 +271,12 @@ namespace SafeBite.API.Controllers
         }
 
 
-        // Logs out the authenticated user by revoking the active JWT token and recording the logout time.
-
-        
+        // Logout the user 
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var tokenJti = User.FindFirstValue(JwtRegisteredClaimNames.Jti);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);//read user ID from JWT claims 
+            var tokenJti = User.FindFirstValue(JwtRegisteredClaimNames.Jti);//read the jti claim from JWT claims
 
             if (userId == null || tokenJti == null)
                 return Unauthorized();
@@ -307,10 +299,10 @@ namespace SafeBite.API.Controllers
 
 
 
-        // Generates a JWT token for the authenticated user with relevant claims.
-        private string GenerateJwtToken(User user, string roleType)
+        // Generates a JWT token 
+    private string GenerateJwtToken(User user, string roleType)
 {
-    var jwtSettings = _configuration.GetSection("Jwt");
+    var jwtSettings = _configuration.GetSection("Jwt");// Get JWT settings from configuration
     var key = new SymmetricSecurityKey(
         Encoding.UTF8.GetBytes(jwtSettings["Key"]!)
     );
