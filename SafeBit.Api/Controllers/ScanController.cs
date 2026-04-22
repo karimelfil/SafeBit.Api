@@ -58,13 +58,13 @@ namespace SafeBit.Api.Controllers
             {
                 var aiResult = TryDeserializeAiResult(s.ResultsSummary);
                 var safeCount = aiResult?.Summary?.SafeToOrder.Count
-                    ?? aiResult?.Dishes.Count(d => IsSafetyLevel(d.SafetyLevel, "SAFE"))
+                    ?? aiResult?.Dishes.Count(d => IsSafetyLevel(d.SafetyLevel, "safe"))
                     ?? s.Dishes.Count(d => d.IsSafe);
-                var cautionCount = aiResult?.Summary?.CautionDishes.Count
-                    ?? aiResult?.Dishes.Count(d => IsSafetyLevel(d.SafetyLevel, "CAUTION"))
+                var riskyCount = aiResult?.Summary?.CautionDishes.Count
+                    ?? aiResult?.Dishes.Count(d => IsSafetyLevel(d.SafetyLevel, "risky"))
                     ?? 0;
-                var riskyCount = aiResult?.Summary?.RiskyDishes.Count
-                    ?? aiResult?.Dishes.Count(d => IsSafetyLevel(d.SafetyLevel, "RISKY"))
+                var unsafeCount = aiResult?.Summary?.RiskyDishes.Count
+                    ?? aiResult?.Dishes.Count(d => IsSafetyLevel(d.SafetyLevel, "unsafe"))
                     ?? s.Dishes.Count(d => !d.IsSafe);
 
                 return new
@@ -73,8 +73,8 @@ namespace SafeBit.Api.Controllers
                     s.RestaurantName,
                     s.ScanDate,
                     SafeCount = safeCount,
-                    CautionCount = cautionCount,
-                    RiskyCount = riskyCount
+                    RiskyCount = riskyCount,
+                    UnsafeCount = unsafeCount
                 };
             });
 
@@ -107,7 +107,7 @@ namespace SafeBit.Api.Controllers
                         {
                             d.DishID,
                             d.DishName,
-                            SafetyStatus = d.IsSafe ? "SAFE" : "RISKY",
+                            SafetyStatus = d.IsSafe ? "safe" : "risky",
                             Ingredients = d.DishIngredients
                                 .Where(di => !di.IsDeleted)
                                 .Select(di => di.Ingredient.Name)

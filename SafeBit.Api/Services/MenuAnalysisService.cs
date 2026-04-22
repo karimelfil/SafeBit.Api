@@ -63,7 +63,7 @@ using System.Text.Json;
                 {
                     MenuID = menu.MenuID,
                     DishName = d.DishName.Trim(),
-                    IsSafe = d.SafetyLevel == "SAFE"
+                    IsSafe = string.Equals(d.SafetyLevel, "safe", StringComparison.OrdinalIgnoreCase)
                 };
 
                 _db.Dishes.Add(dish);

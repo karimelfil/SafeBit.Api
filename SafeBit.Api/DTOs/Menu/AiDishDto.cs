@@ -20,7 +20,7 @@ namespace SafeBit.Api.DTOs.Menu
         public bool IngredientPredictionUsed { get; set; }
 
         [JsonPropertyName("safety_level")]
-        public string SafetyLevel { get; set; } = "CAUTION";
+        public string SafetyLevel { get; set; } = "risky";
 
         [JsonPropertyName("confidence")]
         public double Confidence { get; set; }

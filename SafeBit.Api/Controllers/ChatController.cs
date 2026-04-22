@@ -158,7 +158,7 @@ namespace SafeBit.Api.Controllers
                     DishName = CleanDishName(d.DishName),
                     DetectedTriggers = CleanList(d.DetectedTriggers),
                     IngredientsFound = CleanList(d.IngredientsFound),
-                    SafetyLevel = string.IsNullOrWhiteSpace(d.SafetyLevel) ? "CAUTION" : d.SafetyLevel,
+                    SafetyLevel = string.IsNullOrWhiteSpace(d.SafetyLevel) ? "risky" : d.SafetyLevel,
                     Confidence = d.Confidence,
                     IngredientCoverage = d.IngredientCoverage,
                     NeedsUserConfirmation = d.NeedsUserConfirmation,

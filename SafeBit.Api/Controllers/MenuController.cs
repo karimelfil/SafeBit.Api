@@ -159,7 +159,8 @@ namespace SafeBit.Api.Controllers
                 UserNeedsSaltCaution(profile) &&
                 ingredients.Any(ContainsSaltMarker))
             {
-                dish.SafetyLevel = "CAUTION";
+                dish.SafetyLevel = "risky";
+
 
                 var cautionNote = "Caution: this dish contains salt, so it should be limited rather than treated as fully safe.";
                 if (!dish.Notes.Contains(cautionNote, StringComparer.OrdinalIgnoreCase))
@@ -195,11 +196,11 @@ namespace SafeBit.Api.Controllers
 
             var parts = new List<string>();
             if (safeToOrder.Count > 0)
-                parts.Add($"Safe to order: {string.Join(", ", safeToOrder)}.");
+                parts.Add($"Safer choices for you: {string.Join(", ", safeToOrder)}.");
             if (riskyDishes.Count > 0)
-                parts.Add($"Not safe: {string.Join(", ", riskyDishes)}.");
+                parts.Add($"Best to avoid: {string.Join(", ", riskyDishes)}.");
             if (cautionDishes.Count > 0)
-                parts.Add($"Need caution or confirmation: {string.Join(", ", cautionDishes)}.");
+                parts.Add($"Check ingredients or ask before ordering: {string.Join(", ", cautionDishes)}.");
 
             return new AiMenuSummaryDto
             {
@@ -233,18 +234,19 @@ namespace SafeBit.Api.Controllers
             var normalized = ingredient.Trim().ToLowerInvariant();
             return normalized.Contains("salt") || normalized.Contains("sodium");
         }
-        
+
 
 
         // Helper methods to check safety levels
 
         private static bool IsSafe(string? level) =>
-            string.Equals(level, "SAFE", StringComparison.OrdinalIgnoreCase);
+            string.Equals(level, "safe", StringComparison.OrdinalIgnoreCase);
 
         private static bool IsCaution(string? level) =>
-            string.Equals(level, "CAUTION", StringComparison.OrdinalIgnoreCase);
+            string.Equals(level, "risky", StringComparison.OrdinalIgnoreCase);
 
         private static bool IsRisky(string? level) =>
-            string.Equals(level, "RISKY", StringComparison.OrdinalIgnoreCase);
+            string.Equals(level, "unsafe", StringComparison.OrdinalIgnoreCase);
+
     }
 }

@@ -27,8 +27,8 @@ builder.Services.AddDbContext<SafeBiteDbContext>(options =>
     )
 );
 
-// Configure CORS to allow requests from the frontend
 const string CorsPolicy = "_allowFrontend";
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(CorsPolicy, policy =>
@@ -37,7 +37,8 @@ builder.Services.AddCors(options =>
                 "http://172.22.128.1:5173",
                 "http://192.168.56.1:5173",
                 "http://192.168.18.10:5173",
-                "https://5mkn7tb3-5173.euw.devtunnels.ms"
+                "https://3jnvsnct-5173.uks1.devtunnels.ms",    
+                "https://web.safebit.app"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
