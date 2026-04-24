@@ -18,7 +18,7 @@ using System.Text.Json;
         }
 
         // Saves the uploaded menu and AI analysis results to the database
-        public async Task<int> CreateMenuAndSaveResultAsync(
+        public virtual async Task<int> CreateMenuAndSaveResultAsync(
             int userId,
             string restaurantName,
             IFormFile file,

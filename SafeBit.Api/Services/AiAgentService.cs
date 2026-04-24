@@ -31,7 +31,7 @@ namespace SafeBit.Api.Services
 
 
         // Analyzes a menu image and returns structured data
-        public async Task<AiAnalyzeMenuResponse> AnalyzeMenuAsync(
+        public virtual async Task<AiAnalyzeMenuResponse> AnalyzeMenuAsync(
             IFormFile menuImage,
             AiUserProfileDto profile)
         {
@@ -66,7 +66,7 @@ namespace SafeBit.Api.Services
             return result;
         }
 
-        public async Task<AiChatPythonResponseDto> ChatAsync(AiChatRequestDto request)
+        public virtual async Task<AiChatPythonResponseDto> ChatAsync(AiChatRequestDto request)
         {
             var response = await _http.PostAsJsonAsync("/chat", request);
 

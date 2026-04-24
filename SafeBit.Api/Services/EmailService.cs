@@ -13,7 +13,7 @@ namespace SafeBit.Api.Services
         }
 
         // Sends an email 
-        public async Task SendAsync(string to, string subject, string body)
+        public virtual async Task SendAsync(string to, string subject, string body)
         {
             var settings = _configuration.GetSection("EmailSettings");
             var senderName = settings["SenderName"] ?? "SafeBite";

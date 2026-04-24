@@ -295,10 +295,13 @@ namespace SafeBit.Api.Controllers
             if (string.IsNullOrWhiteSpace(request.Category))
                 return BadRequest("Allergen category is required.");
 
+            var normalizedName = request.Name.Trim();
+            var normalizedCategory = request.Category.Trim();
+
             var exists = await _context.Allergies
                 .AnyAsync(a =>
-                    a.Name.ToLower() == request.Name.ToLower() &&
-                    a.Category.ToLower() == request.Category.ToLower()
+                    a.Name.ToLower() == normalizedName.ToLower() &&
+                    a.Category.ToLower() == normalizedCategory.ToLower()
                 );
 
             if (exists)
@@ -306,8 +309,8 @@ namespace SafeBit.Api.Controllers
 
             var allergen = new Allergy
             {
-                Name = request.Name.Trim(),
-                Category = request.Category.Trim(),
+                Name = normalizedName,
+                Category = normalizedCategory,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -331,10 +334,13 @@ namespace SafeBit.Api.Controllers
             if (string.IsNullOrWhiteSpace(request.Category))
                 return BadRequest("Diseases category is required.");
 
+            var normalizedName = request.Name.Trim();
+            var normalizedCategory = request.Category.Trim();
+
             var exists = await _context.Diseases
                 .AnyAsync(a =>
-                    a.Name.ToLower() == request.Name.ToLower() &&
-                    a.Category.ToLower() == request.Category.ToLower()
+                    a.Name.ToLower() == normalizedName.ToLower() &&
+                    a.Category.ToLower() == normalizedCategory.ToLower()
                 );
 
             if (exists)
@@ -342,8 +348,8 @@ namespace SafeBit.Api.Controllers
 
             var diseases = new Disease
             {
-                Name = request.Name.Trim(),
-                Category = request.Category.Trim(),
+                Name = normalizedName,
+                Category = normalizedCategory,
                 CreatedAt = DateTime.UtcNow
             };
 
